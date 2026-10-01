@@ -1,0 +1,127 @@
+{
+  "skill_name": "implement-tdd-feature",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "implement chat rename",
+      "expected_output": "Neither plans/feature-chat-rename-plan.md nor plans/feature-chat-rename-refinement.md exists, so the skill stops and proposes running /refine chat rename, then /plan-tdd-feature chat rename. It writes no files and doesn't survey the codebase.",
+      "files": [],
+      "assertions": [
+        "Proposes running /refine for chat rename first",
+        "Proposes /plan-tdd-feature as the step after /refine",
+        "Creates or changes no files in the worktree",
+        "Doesn't survey the codebase (no Agent/Explore launches, no reading of source files to design the feature)",
+        "Doesn't list or mention the plans for other features in plans/"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "/implement-tdd-feature story word count",
+      "expected_output": "Only the refinement exists. The skill stops, proposes /plan-tdd-feature story word count, and gives one sentence of reason (the tests come from the plan's steps). No files written.",
+      "files": [
+        "fixtures/fresh/plans/feature-story-word-count-refinement.md"
+      ],
+      "assertions": [
+        "Proposes running /plan-tdd-feature for story word count",
+        "Gives a reason that the tests come from the plan's steps",
+        "Does not propose /refine (the refinement already exists)",
+        "Creates or changes no files in the worktree (the refinement is unchanged)",
+        "Writes no tests or source code"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "/implement-tdd-feature story word count, carry on from where we left off",
+      "expected_output": "Setup: on branch feature/story-word-count. Progress says steps 0-2 are done. The skill resumes at step 3, leaves the step 1-2 tests and countWords as they are, runs each new step's tests red before writing its code, builds steps 3-6, keeps AC6/AC8 unticked and lists the manual checks at the end.",
+      "files": [
+        "fixtures/fresh/plans/feature-story-word-count-refinement.md",
+        "fixtures/resume/plans/feature-story-word-count-plan.md",
+        "fixtures/resume/src/lib/wordCount.ts.fixture",
+        "fixtures/resume/src/lib/wordCount.test.ts.fixture"
+      ],
+      "assertions": [
+        "Starts at step 3; does not redo step 0, 1 or 2",
+        "The AC1-AC3 tests in src/lib/wordCount.test.ts are unchanged, and countWords is unchanged",
+        "The transcript shows the step 3, 5 and 6 tests run and failing before the matching code was written",
+        "Step 5's 'no story yet' row is noted as already passing, as the plan says",
+        "The new tests use the plan's describe/it names with AC numbers and its concrete values",
+        "npm test is all green at the end (42 existing + 5 earlier + 9 new = 56 tests)",
+        "AC4, AC5 and AC7 are ticked in the plan; AC6 and AC8 are not",
+        "Progress in the plan names the steps done, the test count and the next state",
+        "Appends to plans/feature-story-word-count-build-log.md with a line per test/lint/build command and its result"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "the tdd plan for story word count is ready, go ahead and build it. I'm already on feature/story-word-count",
+      "expected_output": "Setup: on branch feature/story-word-count. The skill builds past the step 4 manual check to steps 5 and 6 without stopping, doesn't tick AC6 or AC8, and gives a numbered list of manual checks at the end with the command to start the app.",
+      "files": [
+        "fixtures/fresh/plans/feature-story-word-count-refinement.md",
+        "fixtures/fresh/plans/feature-story-word-count-plan.md"
+      ],
+      "assertions": [
+        "Steps 5 and 6 are built (storyWordCount handles invalid JSON; wordCountLabel is implemented)",
+        "AC6 and AC8 stay unticked (- [ ]) in the plan",
+        "The run doesn't stop or ask the user anything at step 4",
+        "The final reply has a numbered list of manual checks that covers step 4's two checks and step 6's check",
+        "The manual-check list includes the command to start the app (npm run dev)",
+        "AdventureApp.tsx renders the count with wordCountLabel(storyWordCount(...)) in the header"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "/implement-tdd-feature story-word-count",
+      "expected_output": "Setup: on branch feature/story-word-count. Progress says steps 0-1 are done, but countWords already has step 2's code. When the step 2 tests are written and run, they pass although the plan says they fail. The skill stops and reports it, and doesn't go on to step 3.",
+      "files": [
+        "fixtures/fresh/plans/feature-story-word-count-refinement.md",
+        "fixtures/false-red/plans/feature-story-word-count-plan.md",
+        "fixtures/false-red/src/lib/wordCount.ts.fixture",
+        "fixtures/false-red/src/lib/wordCount.test.ts.fixture"
+      ],
+      "assertions": [
+        "Writes the step 2 tests and runs them",
+        "Stops after seeing that the step 2 tests pass, and reports that the plan expected them to fail",
+        "The report shows what the plan expected and what happened, and asks the user how to continue",
+        "Writes no step 3 tests and doesn't implement storyWordCount",
+        "Doesn't change the tests to make them fail, and doesn't tick AC2 or AC3",
+        "The build log records the step 2 run that passed early, and the stop"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "/implement-tdd-feature story word count",
+      "expected_output": "Setup: on branch feature/story-word-count. Nothing in the plan needs a human, so the skill runs steps 0-6 in one go without pausing between them, runs verification (test, lint, tsc, build), updates both Progress sections, and reports once at the end. No commit.",
+      "files": [
+        "fixtures/fresh/plans/feature-story-word-count-refinement.md",
+        "fixtures/fresh/plans/feature-story-word-count-plan.md"
+      ],
+      "assertions": [
+        "All steps 0-6 are built without an AskUserQuestion call or a stop between steps",
+        "src/lib/wordCount.ts and src/lib/wordCount.test.ts exist, and npm test shows 56 passing tests",
+        "Runs lint, type-check and build at the end and reports each result",
+        "AC1-AC5 are ticked; AC6, AC7 and AC8 are left for manual checks (AC7 has tests and a manual check, so it waits for both)",
+        "The plan's Progress says built, with manual checks pending",
+        "The refinement gets exactly one new Progress line ('Built on <date>, see plans/feature-story-word-count-plan.md.') and nothing else changes",
+        "No git commit is made",
+        "No Co-Authored-By or other AI attribution appears in any file",
+        "Writes plans/feature-story-word-count-build-log.md with a line per test/lint/build command and its result, including each step's red run",
+        "The final reply names /ship as the next step"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "/implement-tdd-feature story word count",
+      "expected_output": "Setup: on main. The plan exists, but the work would start on the default branch. The skill proposes creating feature/story-word-count and waits, without switching branches or writing code.",
+      "files": [
+        "fixtures/fresh/plans/feature-story-word-count-refinement.md",
+        "fixtures/fresh/plans/feature-story-word-count-plan.md"
+      ],
+      "assertions": [
+        "Proposes creating a feature/story-word-count branch",
+        "Doesn't create or switch branches itself",
+        "Writes no tests or source code before the user answers",
+        "Asks about the branch before running the test suite"
+      ]
+    }
+  ]
+}

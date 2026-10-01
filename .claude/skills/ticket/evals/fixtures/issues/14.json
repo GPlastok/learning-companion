@@ -1,0 +1,13 @@
+{
+  "number": 14,
+  "title": "Let agents reassign a ticket",
+  "state": "OPEN",
+  "url": "https://github.com/example-org/ticketing/issues/14",
+  "labels": [
+    {
+      "name": "feature"
+    }
+  ],
+  "body": "Right now a ticket stays with whoever opened it. Agents should be able to hand a ticket to a colleague from the ticket page, and the new assignee should see it in their list.",
+  "comments": []
+}

@@ -1,0 +1,24 @@
+import { describe, expect, it } from "vitest";
+import type { Message } from "@/app/actions";
+import { countWords, storyWordCount, wordCountLabel } from "@/lib/wordCount";
+
+const user = (content: string): Message => ({ role: "user", content });
+const beat = (b: { story: string; options?: string[]; ended?: boolean }): Message => ({
+  role: "assistant",
+  content: JSON.stringify({ story: b.story, options: b.options ?? ["Go on"], ended: b.ended ?? false }),
+});
+
+describe("countWords", () => {
+  it("AC1. counts words separated by single spaces", () => {
+    expect(countWords("The nurse smiles.")).toBe(3);
+  });
+
+  it.each([
+    ["AC2. treats a run of spaces as one separator", "The  nurse   smiles.", 3],
+    ["AC2. treats newlines and tabs as separators", "The nurse\n\nsmiles.\tNow.", 4],
+    ["AC3. counts empty text as 0", "", 0],
+    ["AC3. counts whitespace-only text as 0", "  \n\t ", 0],
+  ])("%s", (_name, text, expected) => {
+    expect(countWords(text)).toBe(expected);
+  });
+});

@@ -1,0 +1,22 @@
+name: Feature
+description: A feature to build with /ticket → /refine → /plan-tdd-feature
+labels: [enhancement]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What should it do?
+      description: The behaviour from the user's side. Leave out how to build it.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+  - type: textarea
+    id: ac
+    attributes:
+      label: Acceptance criteria
+      description: One observable behaviour per line. Optional, and /refine adds any that are missing.
+      value: |
+        - [ ]

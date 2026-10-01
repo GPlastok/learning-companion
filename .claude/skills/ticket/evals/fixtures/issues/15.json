@@ -1,0 +1,16 @@
+{
+  "number": 15,
+  "title": "Close tickets from the list view",
+  "state": "CLOSED",
+  "url": "https://github.com/example-org/ticketing/issues/15",
+  "labels": [],
+  "body": "Closing a ticket means opening it first, which is slow.\n\n- [ ] Each row in the ticket list has a Close button\n- [ ] Clicking it closes the ticket without leaving the list\n- [ ] A closed ticket disappears from the Open filter\n",
+  "comments": [
+    {
+      "author": {
+        "login": "lena-k"
+      },
+      "body": "Shipped a quick version in the old app, reopening for the rewrite."
+    }
+  ]
+}

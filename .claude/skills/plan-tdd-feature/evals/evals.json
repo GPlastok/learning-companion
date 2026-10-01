@@ -1,0 +1,54 @@
+{
+  "skill_name": "plan-tdd-feature",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "/plan-tdd-feature story-export\n\nAnswers to the open questions from refine: 1) story header, next to the title. 2) title plus date, like the-study-2026-09-29.txt. 3) yes, add the scene state at the end. 4) replace it with a line saying [unreadable turn].",
+      "expected_output": "plans/feature-story-export-plan.md with the four answers as D1-D4, steps grouped by function or behaviour, each listing the ACs it covers (plus criteria from D3/D4), red/green per step, UI criteria as manual checks since there is no DOM test env; refinement Progress gets one line.",
+      "files": [
+        "fixtures/feature-story-export-refinement.md"
+      ],
+      "assertions": [
+        "Writes the plan to plans/feature-story-export-plan.md",
+        "Records all four answers as decisions (D1-D4) in the plan",
+        "Every non-blocked acceptance criterion maps to exactly one step; a step may cover several related criteria and names them in its heading",
+        "Each criterion has at least one test (or manual check) labelled with its AC number",
+        "Each step has Test, Red, Green and Refactor parts",
+        "Red parts name an assertion failure reason, not an import/missing-module error",
+        "UI criteria (button visible, click downloads) are manual checks, not new DOM test tooling",
+        "Adds at least one criterion derived from an answer (scene state at end or [unreadable turn])",
+        "Creates no source or test files (only files under plans/ change)",
+        "Refinement Progress gets one added line pointing at the plan; rest of refinement unchanged",
+        "Any question asked is numbered Q<n>, and decisions from answers cite that number"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "ok refine is done for chat rename, can you write me the tdd plan for it",
+      "expected_output": "No plans/feature-chat-rename-refinement.md exists, so the skill stops and tells the user to run /refine chat rename first. No plan file is written and no codebase survey is done.",
+      "files": [],
+      "assertions": [
+        "Writes no plan file",
+        "Tells the user to run /refine for chat rename first",
+        "Creates or changes no files in the worktree"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "write the TDD plan for story export. I only know that the export button goes in the story header, the rest of the open questions I haven't decided yet, just leave them",
+      "expected_output": "Plan records D1 (header) and marks criteria depending on Q2-Q4 as blocked instead of guessing; the invalid-beat criterion is blocked by Q4; no invented file name.",
+      "files": [
+        "fixtures/feature-story-export-refinement.md"
+      ],
+      "assertions": [
+        "Writes the plan to plans/feature-story-export-plan.md",
+        "Records the header placement answer as a decision",
+        "Marks the invalid-beat criterion as blocked by the invalid-beat open question (Q4)",
+        "Does not invent a file name format (Q2 left open, no chosen naming scheme in steps)",
+        "Does not plan scene-state output (Q3 left open)",
+        "Unblocked criteria each map to exactly one step, and steps group related criteria",
+        "Creates no source or test files (only files under plans/ change)"
+      ]
+    }
+  ]
+}

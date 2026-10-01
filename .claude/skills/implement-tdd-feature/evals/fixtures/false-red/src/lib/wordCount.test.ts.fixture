@@ -1,0 +1,15 @@
+import { describe, expect, it } from "vitest";
+import type { Message } from "@/app/actions";
+import { countWords, storyWordCount, wordCountLabel } from "@/lib/wordCount";
+
+const user = (content: string): Message => ({ role: "user", content });
+const beat = (b: { story: string; options?: string[]; ended?: boolean }): Message => ({
+  role: "assistant",
+  content: JSON.stringify({ story: b.story, options: b.options ?? ["Go on"], ended: b.ended ?? false }),
+});
+
+describe("countWords", () => {
+  it("AC1. counts words separated by single spaces", () => {
+    expect(countWords("The nurse smiles.")).toBe(3);
+  });
+});

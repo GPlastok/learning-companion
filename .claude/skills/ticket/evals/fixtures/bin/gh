@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Fake gh for the ticket evals. Serves issues from ../issues/<n>.json.
+# GH_FAKE_AUTH=0 makes `gh auth status` fail.
+dir="$(cd "$(dirname "$0")/../issues" && pwd)"
+case "$1 $2" in
+  "--version "*) echo "gh version 2.60.0 (fake)"; exit 0 ;;
+  "auth status")
+    if [ "${GH_FAKE_AUTH:-1}" = 0 ]; then
+      echo "You are not logged into any GitHub hosts. To log in, run: gh auth login" >&2; exit 1
+    fi
+    echo "github.com: Logged in to github.com account eval-user"; exit 0 ;;
+  "issue view")
+    ref="${3##*/}"; ref="${ref#\#}"
+    if [ -f "$dir/$ref.json" ]; then cat "$dir/$ref.json"; exit 0; fi
+    echo "GraphQL: Could not resolve to an issue or pull request with the number of $ref. (repository.issue)" >&2; exit 1 ;;
+  *) echo "fake gh: '$*' is not supported in the ticket evals" >&2; exit 1 ;;
+esac

@@ -1,0 +1,13 @@
+import type { Message } from "@/app/actions";
+
+export function countWords(text: string): number {
+  return text.split(/\s+/).filter(Boolean).length;
+}
+
+export function storyWordCount(messages: Message[]): number {
+  throw new Error("not implemented");
+}
+
+export function wordCountLabel(count: number): string {
+  throw new Error("not implemented");
+}

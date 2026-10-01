@@ -3,6 +3,12 @@
 {% block content %}
 <section class="py-16">
     <h1 class="text-3xl font-bold">Learning Companion</h1>
+    {% if profile.cohort is None %}
+    <p class="mt-4 p-4 bg-yellow-50 border rounded">
+        <a href="{% url 'profile_edit' %}" class="underline">Complete your profile</a>
+        to pick your cohort and focus areas.
+    </p>
+    {% endif %}
     <p class="mt-4 text-gray-600">Nothing here yet.</p>
 </section>
 {% endblock %}

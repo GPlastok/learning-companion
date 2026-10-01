@@ -46,9 +46,18 @@ INSTALLED_APPS = [
     "theme",
     "django_htmx",
     "core",
+    "accounts",
 ]
 
 TAILWIND_APP_NAME = "theme"
+
+AUTH_USER_MODEL = "accounts.User"
+
+AUTHENTICATION_BACKENDS = ["accounts.backends.UsernameOrEmailBackend"]
+
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "home"
+LOGOUT_REDIRECT_URL = "login"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

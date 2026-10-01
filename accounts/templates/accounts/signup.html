@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="py-16 max-w-md">
+    <h1 class="text-3xl font-bold">Sign up</h1>
+    <form method="post" class="mt-6 space-y-4">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="px-4 py-2 bg-black text-white rounded">Sign up</button>
+    </form>
+    <p class="mt-4 text-gray-600">Already have an account? <a href="{% url 'login' %}" class="underline">Log in</a></p>
+</section>
+{% endblock %}

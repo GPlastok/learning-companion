@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="py-16 max-w-xl">
+    <h1 class="text-3xl font-bold">{{ profile.user.get_full_name }}</h1>
+    <dl class="mt-6 grid grid-cols-3 gap-2">
+        <dt class="font-bold">Username</dt>
+        <dd class="col-span-2">{{ profile.user.username }}</dd>
+        <dt class="font-bold">Email</dt>
+        <dd class="col-span-2">{{ profile.user.email }}</dd>
+        <dt class="font-bold">Cohort</dt>
+        <dd class="col-span-2">{{ profile.cohort|default:"Not set" }}</dd>
+    </dl>
+    <h2 class="mt-8 text-xl font-bold">Focus areas</h2>
+    <ul class="mt-2 flex flex-wrap gap-2">
+        {% for tag in profile.focus_areas.all %}
+        <li class="px-2 py-1 border rounded">{{ tag.name }}</li>
+        {% empty %}
+        <li class="text-gray-600">No focus areas yet</li>
+        {% endfor %}
+    </ul>
+    {% if is_owner %}
+    <p class="mt-8 flex gap-4">
+        <a href="{% url 'profile_edit' %}" class="underline">Edit profile</a>
+        <a href="{% url 'account_delete' %}" class="underline text-red-700">Delete account</a>
+    </p>
+    {% endif %}
+</section>
+{% endblock %}

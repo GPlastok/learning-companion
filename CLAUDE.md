@@ -13,7 +13,7 @@ Decided on 2026-10-01. Raise a change as a question with options; don't switch o
 - **pytest + pytest-django.**
 - **venv + pip** with `requirements.txt` (runtime) and `requirements-dev.txt` (tests, ruff).
 - **SQLite now, PostgreSQL later**, read from `DATABASE_URL`.
-- **django-environ** for `SECRET_KEY`, `DEBUG`, `DATABASE_URL`, `OPENAI_API_KEY`.
+- **django-environ** for `SECRET_KEY`, `DEBUG`, `DATABASE_URL`, `OPENAI_API_KEY`. Only `SECRET_KEY` is required. The defaults are dev-friendly: `DATABASE_URL` falls back to SQLite at `db.sqlite3`, `DEBUG` to `True`, `OPENAI_API_KEY` to empty. These may need to change before production, and production must set `DEBUG=False`.
 - **OpenAI Chat Completions, synchronous.**
 - **Tags as a `Tag` model (M2M)**, not `ArrayField`, so per-tag queries and counts work on SQLite and PostgreSQL alike.
 - **Makefile** as the one command menu, for people and for the pipeline's permissions.
@@ -21,17 +21,15 @@ Decided on 2026-10-01. Raise a change as a question with options; don't switch o
 
 ## Commands
 
-Added by the scaffold ticket; none of these exist yet.
-
-| Command                        | Does                                            |
-| ------------------------------ | ----------------------------------------------- |
-| `make install`                 | install both requirements files into the venv   |
-| `make test`                    | run the whole pytest suite                      |
-| `make test ARGS="-k test_ac3"` | run matching tests only (`ARGS` goes to pytest) |
-| `make lint`                    | `ruff check .`                                  |
-| `make format`                  | `ruff format`                                   |
-| `make dev`                     | start the dev server                            |
-| `make migrate`                 | apply migrations                                |
+| Command                        | Does                                                                             |
+| ------------------------------ | -------------------------------------------------------------------------------- |
+| `make install`                 | create `.venv/` if missing, install both requirements files, install Tailwind (npm) |
+| `make test`                    | run the whole pytest suite                                                       |
+| `make test ARGS="-k test_ac3"` | run matching tests only (`ARGS` goes to pytest)                                  |
+| `make lint`                    | `ruff check .`                                                                   |
+| `make format`                  | `ruff format`                                                                    |
+| `make dev`                     | start the dev server and the Tailwind watcher                                    |
+| `make migrate`                 | apply migrations                                                                 |
 
 ## Tests
 
@@ -86,8 +84,8 @@ Rules per stage:
 Applies to every stage:
 
 - Claude may not read or edit `.env` or `.env.*` (`deny` rules).
-- `git push`, `gh pr create`, `gh pr comment`, `gh issue create`, `gh issue comment` and
-  `gh project item-edit` always ask first (`ask` rules).
+- `git push`, `gh pr create`, `gh pr comment`, `gh issue create`, `gh issue edit`,
+  `gh issue comment` and `gh project item-edit` always ask first (`ask` rules).
 - The `PreToolUse` hook `block-ai-attribution.sh` rejects any commit, PR, issue or comment
   that carries a `Co-Authored-By` trailer or a "Generated with Claude" line, and
   `settings.json` turns the default attribution off.
@@ -111,3 +109,7 @@ you approve. No skill moves a card to Done. `/manager-tdd` with no argument pick
 card: In Progress first, then Review, then the top of Refined, then the top of Todo. "Top"
 is the card order `gh project item-list` returns, which matches the board as long as the
 board view has no sort set.
+
+When review is clean, `/manager-tdd` also ticks the issue's own criteria (the ones `/ticket`
+copied) that the plan has ticked, through `gh issue edit`, which you approve. It only ticks,
+never unticks, and leaves the refinement's added criteria out of the issue.

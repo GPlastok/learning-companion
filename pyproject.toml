@@ -1,0 +1,14 @@
+[project]
+name = "learning-companion"
+version = "0.1.0"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "learning_companion.settings_test"
+testpaths = ["tests"]
+
+[tool.ruff]
+
+[tool.ruff.lint]
+# The repo sits on an NTFS mount that marks every file executable; git ignores the bit.
+extend-ignore = ["EXE002"]

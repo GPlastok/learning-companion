@@ -1,0 +1,23 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Django
+db.sqlite3
+staticfiles/
+media/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Tailwind build
+node_modules/
+
+# Claude Code, per user
+.claude/settings.local.json
+.claude/worktrees/

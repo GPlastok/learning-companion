@@ -1,6 +1,6 @@
 ---
 name: plan-tdd-feature
-description: Turns a /refine refinement file into a test-driven build plan. Reads plans/feature-<feature-name>-refinement.md, asks the user any open questions it still has, then writes plans/feature-<feature-name>-plan.md with one red-green step per function or behaviour, each listing the acceptance criteria it covers, and runs /unslop on it. Writes no code or tests. Use when the user types /plan-tdd-feature, asks for a TDD plan, or says a refined feature is ready to plan. If no refinement file exists, it sends the user to /refine first.
+description: Turns a /refine refinement file into a test-driven build plan. Reads plans/feature-<feature-name>-refinement.md, asks the user any open questions it still has, then writes plans/feature-<feature-name>-plan.md with one red-green step per function or behaviour, each listing the acceptance criteria it covers, and runs /unslop on it. In a repo with no project yet, its step 0 sets up the project, its tooling and a first passing test. Writes no code or tests. Use when the user types /plan-tdd-feature, asks for a TDD plan, or says a refined feature is ready to plan. If no refinement file exists, it sends the user to /refine first.
 argument-hint: "<feature name, as given to /refine>"
 allowed-tools: Read, Glob, Grep, Write, Edit, Skill, AskUserQuestion, Bash(ls:*), Bash(git log:*), Bash(git status:*)
 ---
@@ -32,7 +32,10 @@ kebab-case slug `/refine` uses (`Inventory drop` gives `inventory-drop`). Look f
   codebase yourself to fill the gap. That's `/refine`'s job.
 
 If `plans/feature-<slug>-plan.md` already exists, read it and ask whether to update or
-replace it. Its Progress section may record work that's already done.
+replace it. Its Progress section may record work that's already done. If its `## Review`
+section has findings marked `→ plan`, those are why it needs updating: settle each one
+(as questions in step 3 if needed), change the criteria and steps it affects, and mark the
+finding `→ plan updated <date>`. Keep the steps already done and their tests as they are.
 
 ## 2. Read the context
 
@@ -40,7 +43,11 @@ replace it. Its Progress section may record work that's already done.
 - Read the project's guidance (`CLAUDE.md`, `AGENTS.md` and what they point to) and any
   decision records the refinement cites.
 - Read one or two existing test files the refinement names as the pattern to copy, so
-  the planned tests match the real helpers, naming and `describe` layout.
+  the planned tests match the real helpers, naming and layout (test modules, classes or
+  `describe` blocks). Read the test naming rules in the guidance files too.
+- If the refinement's survey found no project or no test suite ("not found"), there is
+  nothing to copy or spot-check. Take the stack, layout and commands from the guidance
+  files instead, and plan a setup step 0 (step 4).
 - Spot-check that the paths and functions the refinement names still exist. If
   `git log` shows commits since the refinement's date that touch those files, note what
   changed. If something the plan depends on is gone, tell the user and ask whether to
@@ -93,12 +100,14 @@ heading.
 
 - Every criterion that isn't blocked maps to exactly one step, and the criteria list
   shows which (`→ step 3`). That's what lets a reviewer see that nothing was skipped.
-- Inside a step, each criterion gets at least one `it` or `it.each` row whose name
-  starts with its AC number (`it("AC14. prefixes every player line with '> '")`). The
-  build session can then still tick criteria off one at a time.
+- Inside a step, each criterion gets at least one test, or one row of a table-driven
+  test, whose name carries its AC number. Use the project's naming rule if the guidance
+  sets one, for example `test_ac14_prefixes_player_lines` with pytest or
+  `it("AC14. prefixes every player line with '> '")` with Jest or Vitest. The build
+  session can then still tick criteria off one at a time.
 - Put criteria that exercise the same function with different inputs into one step,
-  often as one `it.each` table. Ten slug rules for one file-name function are one step,
-  not ten.
+  often as one table-driven test (`@pytest.mark.parametrize`, `it.each`). Ten slug rules
+  for one file-name function are one step, not ten.
 - A criterion that holds as soon as its step's code exists ("the file has no raw JSON",
   "a reload gives the same text") is written as a test in that step. It doesn't get a
   step of its own that starts green, and it doesn't need a "break it temporarily" check.
@@ -110,28 +119,49 @@ heading.
 
 Every step has the same parts:
 
-- **Test.** The file, the `describe`/`it` names, and what each test arranges, does and
-  asserts, labelled with its AC. Use concrete input values, and name the helpers the
-  test file already has or should add.
+- **Test.** The file, the test names (and the class or `describe` block they sit in), and
+  what each test arranges, does and asserts, labelled with its AC. Use concrete input
+  values, and name the helpers the test file already has or should add.
 - **Red.** The exact reason the tests fail before the code exists, for example "fails on
-  the assertion: `formatStory` returns `\"\"`" or "fails: `ended` is `undefined`". A test
-  that fails for the wrong reason, such as an import error or a typo, proves nothing. If
-  a stub is needed so the test fails on its assertion, that stub belongs to step 0. If
-  some rows already pass because of an earlier step, say which ones.
+  the assertion: `format_story` returns an empty string" or "fails: the response has no
+  `ended` field". A test that fails for the wrong reason, such as an import error or a
+  typo, proves nothing. If a stub is needed so the test fails on its assertion, that stub
+  belongs to step 0. If some rows already pass because of an earlier step, say which ones.
 - **Green.** The smallest change that makes this step's tests pass without breaking the
   earlier ones, with the file and function. Don't design ahead for later steps.
 - **Refactor.** Only if there's a real cleanup at this point. Otherwise "none".
 
 Order the steps so each builds on the last: the plain happy path first, then edge cases,
 then errors. A criterion may say something the current test setup can't check, for
-example UI behaviour when the runner is set to a `node` environment, or a live model
-call. Don't quietly add new test tooling. Make that step a manual check with exact
+example UI behaviour when the tests have no browser or DOM, or a live model call. Don't quietly add new test tooling. Make that step a manual check with exact
 click-by-click instructions and expected results, and add a decision noting the gap (the
 user can decide later to add the tooling).
 
 Add a **step 0** only for shared groundwork several steps need: new types, a stub with
-the real signature that throws `"not implemented"`, a test helper, or a decision record
-the project's rules require. If nothing is needed, leave step 0 out.
+the real signature that raises or throws "not implemented", a test helper, or a decision
+record the project's rules require. If nothing is needed, leave step 0 out.
+
+**Setup step 0 for a repo with no project yet.** When the refinement says there is no
+project or no test suite, step 0 creates them, and every later step builds on it. Write
+it as `## Step 0: project setup` with these parts instead of Test, Red, Green and
+Refactor:
+
+- **Setup.** What to create, using only the stack, layout and commands the guidance files
+  name: the project and app skeleton, the dependency files with every package listed by
+  name, the test runner config, the linter config, and the command file (a Makefile, an
+  npm `scripts` block) with the commands the guidance lists. A package or tool the
+  guidance doesn't name is an open item in Decisions, not part of step 0.
+- **First test.** One test that passes once the setup exists and proves the runner works
+  against the real project, for example that the home URL returns 200 or that settings
+  load. Name the file and the test. It's expected to pass when first run; there is no red
+  run, since there is no code yet for it to fail against.
+- **Check.** The commands that must pass at the end of step 0: the full suite (exactly one
+  test, passing), the single-test command, and lint.
+
+Put `No test suite yet: step 0 creates it.` in the plan's Progress, so the build knows to
+run its baseline after step 0. Criteria about the setup itself (the app starts, the lint
+command runs) belong to step 0 and are ticked when its Check passes or, for something only
+a person can see, become manual checks.
 
 ## 5. Write the plan
 
@@ -147,6 +177,7 @@ branch if there is one. What's in scope and what's left for later.
 
 ## Progress
 Plan written on <date>. Nothing built yet. Next: step 0 (or step 1).
+No test suite yet: step 0 creates it. (Only for a setup step 0.)
 
 ## Decisions
 D1. (Q1) <question, shortened>: <answer>. Source: <user, date / conversation>.
@@ -160,7 +191,8 @@ Or: "The refinement had no open questions."
 - [ ] AC6. <criterion> (from D1) → step 3
 
 ## Step 0: groundwork
-(Only if needed.)
+(Only if needed. For a repo with no project yet: `## Step 0: project setup`, with
+Setup, First test and Check.)
 
 ## Step 1: AC1, AC2, <short name>
 **Test.** ...
@@ -173,8 +205,8 @@ New, changed, and for reference, each one with a few words on why.
 
 ## Verification
 The commands to run and what they should show: the suite red after each new test and
-green after each change, then lint, type-check and build, using the refinement's
-commands.
+green after each change, then lint, and type-check or build if the project has them.
+Use the refinement's commands, or the guidance files' when step 0 creates them.
 ```
 
 Use today's date. Every path, function and command must come from the refinement or from

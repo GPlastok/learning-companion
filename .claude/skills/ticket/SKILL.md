@@ -10,7 +10,7 @@ allowed-tools: Skill, Bash(gh issue view:*), Bash(gh auth status:*), Bash(gh --v
 
 Turn a GitHub issue into the input `/refine` needs, then run `/refine`. This skill is the
 front of the pipeline: ticket, `/refine`, `/plan-tdd-feature`, `/implement-tdd-feature`,
-`/ship`. It fetches and hands over. The codebase survey and the criteria work belong to
+`/review-tdd`, `/ship`. `/manager-tdd` can run them in order. It fetches and hands over. The codebase survey and the criteria work belong to
 `/refine`, so don't do either here.
 
 Only read from GitHub. Don't comment on the issue, change its labels or state, move its

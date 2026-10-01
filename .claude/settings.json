@@ -1,13 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run dev)",
-      "Bash(npm run build)",
-      "Bash(npm run lint)",
-      "Bash(npm test)",
-      "Bash(npm run test:watch)",
-      "Bash(npx tsc --noEmit)",
-      "Bash(npx vitest *)",
+      "Bash(make test)",
+      "Bash(make test ARGS=*)",
+      "Bash(make lint)",
+      "Bash(make format)",
       "Bash(git status)",
       "Bash(git diff *)",
       "Bash(git log *)"
@@ -17,6 +14,43 @@
       "Read(./.env.*)",
       "Edit(./.env)",
       "Edit(./.env.*)"
+    ],
+    "ask": [
+      "Bash(gh issue comment *)",
+      "Bash(gh issue create *)",
+      "Bash(gh pr comment *)",
+      "Bash(gh pr create *)",
+      "Bash(gh project item-edit *)",
+      "Bash(git push *)",
+      "Bash(git push)"
+    ]
+  },
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/block-ai-attribution.sh",
+            "statusMessage": "Checking for AI attribution"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/check-plan-progress.sh"
+          }
+        ]
+      }
     ]
   }
 }

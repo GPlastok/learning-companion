@@ -35,7 +35,7 @@ user only when a human has to decide or check something:
 5. A test passes although the plan says it should fail (section 4).
 6. The plan and the code disagree: a Green doesn't work, a planned test is wrong, or the
    code has moved (section 5).
-7. A new dependency or new test tooling seems necessary.
+7. A new dependency or new test tooling seems necessary that the plan doesn't list.
 
 Manual checks are not a reason to stop. Leave their criteria unticked, carry on, and list
 all the checks at the end (section 6). Stop at a manual check early only when the plan
@@ -74,7 +74,7 @@ they don't help the user decide anything.
 - Read the decision records the plan or refinement cites.
 - Read the files each step changes, and the existing test files the plan names as the
   pattern, so new code and tests match their style: comment density, naming, helpers
-  and `describe` layout.
+  and test layout (modules, classes or `describe` blocks).
 - Read the plan's **Progress** section, and the build log if there is one. Progress says
   which steps are done and which comes next. Never redo a step it marks done, and never rewrite that step's tests. They
   already passed red and green once, and a rewrite would lose that.
@@ -99,7 +99,8 @@ Continue the plan's numbering (after Q8 comes Q9). Record the answer as a new de
 as in section 5, then build the step.
 
 **Staleness.** Check that the files and functions the plan names still exist (Glob and
-Grep). Then look for changes since the plan was written: find the commit that last
+Grep). Files the plan lists as new, including everything a setup step 0 creates, aren't
+expected to exist yet. Then look for changes since the plan was written: find the commit that last
 changed the plan (`git log -1 -- <plan path>`) and list the commits after it that touch
 the plan's files (`git log <commit>..HEAD -- <files>`). If the plan isn't committed,
 use the date in its Progress. Changes the Progress section already accounts for, such as
@@ -110,26 +111,44 @@ whether to re-run `/plan-tdd-feature`.
 **Baseline.** Run the full test suite once with the project's command. Note the number
 of passing tests, because each Progress update compares against it. If the suite is
 already red, stop and report it. The failure isn't this feature's, and building on a red
-suite hides which tests the new code broke. One exception: some runners report a test
-file with no tests in it yet (as after a step 0 that only adds helpers) as a failed file.
-That's expected until the next step adds a test. Note it in Progress and carry on.
+suite hides which tests the new code broke. One exception: some runners treat a test file
+with no tests in it yet (as after a step 0 that only adds helpers), or a run that collects
+no tests, as a failure (pytest exits with code 5, Vitest reports a failed file). That's
+expected until the next step adds a test. Note it in Progress and carry on.
+
+If the plan's Progress says `No test suite yet: step 0 creates it.`, there's nothing to
+run yet. Skip the baseline here and run it right after step 0 instead (section 4).
 
 **Build log.** Start or continue `plans/feature-<slug>-build-log.md`, next to the plan.
 Its first line names the plan, and each run adds a dated heading. Under it, append one
 line for every test, lint, type-check or build command you run: the step, the command,
-and what it showed (`Step 3 red: npx vitest run … 3 failed, 5 passed, all "not
-implemented"`). Add one line for each stop and each answer the user gave. Progress says
+and what it showed (`Step 3 red: make test ARGS="-k test_ac7" … 3 failed, all on the
+planned assertion`). Add one line for each stop and each answer the user gave. Progress says
 where the build stands, and the log shows how it got there: that each test really was
 red first, and what the checks said.
 
 ## 4. Build one step at a time
 
-Work through step 0 (if the plan has one) and then every numbered step, in order. For
-each step:
+Work through step 0 (if the plan has one) and then every numbered step, in order.
+
+**Setup step 0** (`## Step 0: project setup`, with Setup, First test and Check parts) is
+built differently, because there's no suite to go red against yet:
+
+1. Create what its **Setup** lists, with the packages it names. Installing those packages
+   is part of the plan, so it isn't a stop. Anything the step doesn't name still is.
+2. Write the **First test** and run the full suite. It must pass with exactly that one
+   test. If it fails, fix the setup, not the test. If it can't pass without something the
+   step doesn't list, go to section 5.
+3. Run every command in **Check**. Each must pass.
+4. This run is the baseline: one passing test. Log the commands and results, tick the
+   criteria step 0 covers, and replace the `No test suite yet` line in Progress with
+   `Step 0 done: 1 test passes.`
+
+For every other step:
 
 1. **Test.** Write exactly the tests the step describes, in the file it names: the same
-   `describe` and `it` names with their AC numbers, the same concrete input values, the
-   same helpers. Don't add tests the plan doesn't list, and don't drop any. The plan's
+   test names with their AC numbers, in the same module, class or `describe` block, with
+   the same concrete input values and helpers. Don't add tests the plan doesn't list, and don't drop any. The plan's
    reader should find the tests it promised under the names it promised.
 2. **Red.** Run only the new tests, with the single-test command from the plan's
    Verification section or the project guidance. Compare the output with the step's
@@ -165,6 +184,19 @@ each step:
 Update Progress after every step, not only at the end. If the run is cut off, the next
 session resumes from what it says.
 
+**Rework steps.** Steps headed `Step <n>: rework R<m>` come from `/review-tdd`, which
+appends them after a review and sets Progress to the first one. Build them like any other
+step, with two differences:
+
+- If the step's **Red** says `None: refactor only`, skip the red run. Make the change, then
+  run the whole suite, which must stay green.
+- Add the rework test next to the earlier tests. Change or remove an earlier step's test
+  only when the rework step's **Test** part says so. That's the reviewed exception to
+  never rewriting a done step's tests.
+
+When a rework step is done, change its finding in the plan's `## Review` section from
+`→ step <n>` to `→ fixed in step <n>`.
+
 ## 5. When the plan and the code disagree
 
 Stop if a step's Green doesn't make its tests pass, a planned test is wrong (it asserts
@@ -188,7 +220,8 @@ describe, and say so in the report.
 ## 6. Verify
 
 After the last step, run everything in the plan's **Verification** section: the full
-test suite, lint, type-check and build, with the project's commands. Report each result
+test suite, lint, and type-check or build if the project has them, with the project's
+commands. Report each result
 as it is. For a failure, include the relevant output. A known warning the plan says may
 remain is not a failure, but mention it.
 
@@ -221,7 +254,10 @@ Use today's date. Then reply in a few lines:
 - the numbered manual-check list, if there is one.
 
 Don't commit, push or open a PR. Look in the project's skills folder (`.claude/skills/`)
-for a skill that commits or ships changes, and suggest it by its slash command (for
-example "run `/ship` to test, lint and commit"). Only fall back to "commit when you're
-ready" if there's none. Never add a `Co-Authored-By` trailer or any other AI attribution anywhere,
+for the next skills. If there's a review skill (`/review-tdd`), suggest it next, in a fresh
+session so the reviewer isn't the session that wrote the code. Then suggest the skill that
+commits or ships changes by its slash command (for example "after a clean review, run
+`/ship` to test, lint and commit"). Only fall back to "commit when you're ready" if there's
+neither. When `/manager-tdd` ran this skill, it runs the review itself, so leave that part
+out. Never add a `Co-Authored-By` trailer or any other AI attribution anywhere,
 in code, comments, plans or commit messages.

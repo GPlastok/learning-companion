@@ -1,8 +1,8 @@
 ---
 name: refine
-description: Studies the codebase before a new feature is built. Launches three sub-agents at once to survey the route structure, the data layer and the test setup, then writes the findings and the feature's acceptance criteria to plans/feature-<feature-name>-refinement.md. Does not plan or implement. Use when the user types /refine, says "use refine" or says "study the codebase", including when they name a feature they are about to build.
+description: Studies the codebase before a new feature is built. Launches three sub-agents at once to survey the route structure, the data layer and the test setup, then writes the findings and the feature's acceptance criteria to plans/feature-<feature-name>-refinement.md. In a repo with no project yet, it skips the survey and records "not found". Does not plan or implement. Use when the user types /refine, says "use refine" or says "study the codebase", including when they name a feature they are about to build.
 argument-hint: "<feature name, and optionally a sentence on what it should do, or acceptance criteria you already have>"
-allowed-tools: Agent, Read, Glob, Grep, Write, Bash(ls:*), Bash(git log:*), Bash(git status:*)
+allowed-tools: Agent, Read, Glob, Grep, Write, Bash(ls:*), Bash(git ls-files:*), Bash(git log:*), Bash(git status:*)
 ---
 
 # Refine
@@ -36,7 +36,9 @@ Turn the name into a kebab-case slug: `inventory-drop` gives
 `plans/feature-inventory-drop-refinement.md`. Create `plans/` if it's missing.
 
 If the file exists, read it and ask whether to update or replace it. It may hold answers
-the user already gave.
+the user already gave. If its Progress points to review findings (`see R<n> in
+plans/feature-<slug>-plan.md`), read those findings. They name the facts to recheck, so
+point the sub-agents at them.
 
 ## 2. Read the ground rules
 
@@ -53,6 +55,14 @@ the sub-agents:
 
 If the guidance says the framework differs from what you remember, or points to bundled
 docs, tell the sub-agents to read those docs.
+
+**Empty repo.** Check whether there's a project to survey yet: `git ls-files` and `ls`
+outside `.claude/`, `.github/`, `plans/` and `docs/`. If there's no manifest, no source
+and no tests (only guidance, docs and tooling), skip step 3. Three sub-agents would only
+report nothing. Write the refinement with each survey section saying `Not found: the repo
+has no project yet.`, and take the stack, the planned layout and the planned commands from
+the guidance files, marked as planned (`planned in CLAUDE.md, not created yet`). That is
+a normal result, not a failure: the plan's step 0 sets the project up. Say so in Context.
 
 ## 3. Launch three sub-agents in one message
 
@@ -145,7 +155,8 @@ pin down. Phrase each as a question. Don't answer it or recommend an option.
 ```
 
 Use today's date. Every path and name in the file must come from something you or a
-sub-agent read. Anything you couldn't find goes under "Open questions".
+sub-agent read. Anything you couldn't find goes under "Open questions", unless it's
+missing because the repo is empty and the guidance files already settle it (step 2).
 
 Always number the open questions (`1.`, `2.`, …), in the file and in every reply that
 lists them, so the user can answer by number. When a round of answers leaves some
@@ -153,6 +164,7 @@ questions open, renumber the rest from 1.
 
 ## 6. Report
 
-Reply in a few lines: the path of the file, the two or three findings that matter most,
+Reply in a few lines: the path of the file, the two or three findings that matter most
+(for an empty repo, that there's no project yet and which guidance the setup will follow),
 and the open questions to answer before planning. Don't print the file, and don't offer
 a plan or start building.

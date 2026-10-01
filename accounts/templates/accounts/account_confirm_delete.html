@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="py-16 max-w-xl">
+    <h1 class="text-3xl font-bold">Delete account</h1>
+    <p class="mt-4">Are you sure? Deleting profiles is permanent.</p>
+    <form method="post" class="mt-6 flex gap-4 items-center">
+        {% csrf_token %}
+        <button type="submit" class="px-4 py-2 bg-red-700 text-white rounded">Delete my account</button>
+        <a href="{% url 'profile' %}" class="underline">Cancel</a>
+    </form>
+</section>
+{% endblock %}

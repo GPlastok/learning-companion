@@ -16,6 +16,7 @@ Decided on 2026-10-01. Raise a change as a question with options; don't switch o
 - **django-environ** for `SECRET_KEY`, `DEBUG`, `DATABASE_URL`, `OPENAI_API_KEY`. Only `SECRET_KEY` is required. The defaults are dev-friendly: `DATABASE_URL` falls back to SQLite at `db.sqlite3`, `DEBUG` to `True`, `OPENAI_API_KEY` to empty. These may need to change before production, and production must set `DEBUG=False`.
 - **OpenAI Chat Completions, synchronous.**
 - **Chart.js** for charts, added 2026-10-01 for the dashboard ticket (#7). Each chart sits above a plain table with the same numbers, so tests check the table and the page reads without JavaScript. Whether the script comes from a CDN or a vendored static file is decided when #7 is planned.
+- **gunicorn + whitenoise** in the container, added 2026-10-01 for the containerization ticket. gunicorn runs the app through `learning_companion.wsgi` in place of `runserver`, which is for development only. whitenoise serves the static files (Tailwind CSS, HTMX, Chart.js) from Django when `DEBUG=False`, so the image needs no separate web server.
 - **Tags as a `Tag` model (M2M)**, not `ArrayField`, so per-tag queries and counts work on SQLite and PostgreSQL alike.
 - **Makefile** as the one command menu, for people and for the pipeline's permissions.
 - **ruff** for lint (`ruff check .`) and format (`ruff format`).

@@ -17,6 +17,7 @@ media/
 
 # Tailwind build
 node_modules/
+theme/static/css/dist/
 
 # Claude Code, per user
 .claude/settings.local.json

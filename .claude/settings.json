@@ -18,6 +18,7 @@
     "ask": [
       "Bash(gh issue comment *)",
       "Bash(gh issue create *)",
+      "Bash(gh issue edit *)",
       "Bash(gh pr comment *)",
       "Bash(gh pr create *)",
       "Bash(gh project item-edit *)",

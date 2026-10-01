@@ -1,9 +1,9 @@
 ---
 name: manager-tdd
 description: >-
-  Runs a feature through the whole TDD pipeline: /ticket or /refine, /plan-tdd-feature, /implement-tdd-feature and /review-tdd, picking the next stage from the files in plans/ so it can resume at any point. Stops only where a human is needed (open questions, the build's own stops, manual checks, review findings that need a decision) and at the end, where the user runs /ship. Auto-fixes review findings that pass strict rules, for at most two review rounds. Moves the issue's card on the GitHub project board as the stages change, with the user approving each move. With no argument, picks the next card from the board, confirms it with the user, and offers the next one when a ticket finishes. Use when the user types /manager-tdd, or asks to run, drive or take a ticket or feature through the pipeline end to end.
+  Runs a feature through the whole TDD pipeline: /ticket or /refine, /plan-tdd-feature, /implement-tdd-feature and /review-tdd, picking the next stage from the files in plans/ so it can resume at any point. Stops only where a human is needed (open questions, the build's own stops, manual checks, review findings that need a decision) and at the end, where the user runs /ship. Auto-fixes review findings that pass strict rules, for at most two review rounds. Moves the issue's card on the GitHub project board as the stages change, with the user approving each move. When review is clean, ticks the issue's own criteria that the plan has ticked, with the user approving the edit. With no argument, picks the next card from the board, confirms it with the user, and offers the next one when a ticket finishes. Use when the user types /manager-tdd, or asks to run, drive or take a ticket or feature through the pipeline end to end.
 argument-hint: "[issue number, or feature name; none picks the next card from the board]"
-allowed-tools: Skill, Read, Glob, Grep, AskUserQuestion, Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git merge-base:*), Bash(git ls-files:*), Bash(git remote:*), Bash(git rev-parse:*), Bash(gh issue view:*), Bash(gh project list:*), Bash(gh project view:*), Bash(gh project field-list:*), Bash(gh project item-list:*), Bash(gh project item-edit:*)
+allowed-tools: Skill, Read, Glob, Grep, AskUserQuestion, Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git merge-base:*), Bash(git ls-files:*), Bash(git remote:*), Bash(git rev-parse:*), Bash(gh issue view:*), Bash(gh issue edit:*), Bash(gh project list:*), Bash(gh project view:*), Bash(gh project field-list:*), Bash(gh project item-list:*), Bash(gh project item-edit:*)
 ---
 
 # Manager
@@ -162,12 +162,39 @@ The feature is done for the manager when review is clean. Report in a few lines:
 
 - the stages run in this session, and the review rounds with their findings by route;
 - criteria still open: blocked, or waiting for a manual check;
-- the card's column;
+- the card's column, and the issue criteria ticked (see below);
 - the user's remaining steps: confirm any pending manual checks, stage the changes, run
   `/ship`, then push the branch and open a PR whose description says `Closes #<n>`.
 
 When the run stopped early instead, report the stage it stopped at, what the user needs to
 answer or do, and that `/manager-tdd <feature>` resumes from there.
+
+**Tick the issue's criteria.** When review is clean, and there is an issue (`Source: #<n>`),
+copy the plan's ticks to the issue's checklist, so the issue and its board card show the
+real count. Run this again whenever `/manager-tdd <feature>` finds the feature done, for
+example after the user confirms manual checks that were pending at the first finish.
+
+1. Read the refinement's `### Supplied` list. Its items are the issue's criteria copied
+   verbatim by `/ticket`, in order, so the n-th item is `AC<n>` in the plan. Criteria under
+   `### Added by refinement` aren't in the issue; leave them out.
+2. Read the issue body: `gh issue view <n> --json body -q .body`.
+3. For each supplied criterion whose plan line is ticked (`- [x] AC<n>.`), find the issue
+   line `- [ ] <the same text>` and change it to `- [x] <the same text>`. Change nothing
+   else in the body.
+4. Only tick, never untick. If the issue has a box ticked that the plan has open, or a
+   supplied criterion has no exact matching line (someone edited the issue since
+   `/ticket`), leave that line as it is and name it in the report. Don't guess a match.
+5. Nothing to change: skip the edit and say the issue already matches.
+6. Otherwise list the lines you're about to tick, then write the whole body back:
+
+   ```bash
+   gh issue edit <n> --body-file - <<'ISSUE_BODY_END'
+   <the full body with the ticks changed>
+   ISSUE_BODY_END
+   ```
+
+   `gh issue edit` is an `ask` rule, so the user approves it. If it fails, report it and
+   carry on, as with a card move.
 
 **Offer the next card.** When the feature finished (review clean) and there's a board, run
 the pick in section 1a again. The card just finished is in Review and reviewed clean, so

@@ -84,8 +84,8 @@ Rules per stage:
 Applies to every stage:
 
 - Claude may not read or edit `.env` or `.env.*` (`deny` rules).
-- `git push`, `gh pr create`, `gh pr comment`, `gh issue create`, `gh issue comment` and
-  `gh project item-edit` always ask first (`ask` rules).
+- `git push`, `gh pr create`, `gh pr comment`, `gh issue create`, `gh issue edit`,
+  `gh issue comment` and `gh project item-edit` always ask first (`ask` rules).
 - The `PreToolUse` hook `block-ai-attribution.sh` rejects any commit, PR, issue or comment
   that carries a `Co-Authored-By` trailer or a "Generated with Claude" line, and
   `settings.json` turns the default attribution off.
@@ -109,3 +109,7 @@ you approve. No skill moves a card to Done. `/manager-tdd` with no argument pick
 card: In Progress first, then Review, then the top of Refined, then the top of Todo. "Top"
 is the card order `gh project item-list` returns, which matches the board as long as the
 board view has no sort set.
+
+When review is clean, `/manager-tdd` also ticks the issue's own criteria (the ones `/ticket`
+copied) that the plan has ticked, through `gh issue edit`, which you approve. It only ticks,
+never unticks, and leaves the refinement's added criteria out of the issue.

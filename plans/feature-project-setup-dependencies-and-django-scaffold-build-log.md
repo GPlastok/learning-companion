@@ -43,3 +43,4 @@ Build log for plans/feature-project-setup-dependencies-and-django-scaffold-plan.
 - Step 7 green: DEBUG default=True; CLAUDE.md wording. `make test`: 11 passed. `make lint`: clean. `make format`: 37 unchanged.
 - Verification: `SECRET_KEY=verify-only make migrate`: no migrations to apply; git status: no generated files.
 - Step 5 check 1 (AC7): the user created .env.example and .env (not read by Claude, deny rule). Awaiting the user's confirmation.
+- Step 5 manual checks confirmed by the user: AC7 (.env.example with the four variables), AC2 (make dev, page styled, styles.css and htmx-2.min.js load), AC1 and AC12 (fresh clone after commit de68306: make install and make test succeed).

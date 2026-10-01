@@ -16,7 +16,7 @@ OpenAI beyond loading the script and reading the key.
 ## Progress
 
 Plan written on 2026-10-01.
-Reviewed on 2026-10-01, round 2: no rework. Manual checks pending: AC1, AC2, AC7, AC12. The user created `.env.example` and `.env` on 2026-10-01 (step 5, check 1). AC7 waits for their confirmation of the contents, since Claude can't read `.env*`. Round 1's rework steps 6 and 7 are built, and 11 tests pass.
+Reviewed on 2026-10-01, round 2: no rework. All 15 criteria done: the user confirmed manual checks AC1, AC2, AC7 and AC12 on 2026-10-01. Round 1's rework steps 6 and 7 are built, and 11 tests pass.
 Deviations: `tailwind` was added to INSTALLED_APPS before `tailwind init` (it needs it). D19 covers ruff's wider defaults. Step 2 loads `django_htmx` on the existing `{% load %}` line. Step 3's helper passes `check=False` to `subprocess.run` (ruff PLW1510). Step 4 also corrected the `make install` and `make dev` descriptions in CLAUDE.md's Commands table to match the Makefile. Without a `.env`, `make migrate` stops on the missing `SECRET_KEY` (D8). It runs once the user's `.env` exists (step 5, check 1).
 
 ## Decisions
@@ -44,18 +44,18 @@ D20. (Q16) `make dev` needs `DEBUG=True` in `.env` because `DEBUG` defaults to `
 
 ## Acceptance criteria
 
-- [ ] AC1. `make install` on a fresh clone installs `requirements.txt` and `requirements-dev.txt` into a venv without errors → step 0 (in the working tree), step 5 (fresh clone, manual)
-- [ ] AC2. `make dev` starts the server, and `/` returns 200 with a placeholder page styled by Tailwind → step 1 (automated part), step 5 (browser, manual)
+- [x] AC1. `make install` on a fresh clone installs `requirements.txt` and `requirements-dev.txt` into a venv without errors → step 0 (in the working tree), step 5 (fresh clone, manual)
+- [x] AC2. `make dev` starts the server, and `/` returns 200 with a placeholder page styled by Tailwind → step 1 (automated part), step 5 (browser, manual)
 - [x] AC3. The base template loads the HTMX script → step 2
 - [x] AC4. `make migrate` applies Django's built-in migrations to SQLite → step 0
 - [x] AC5. Settings read `SECRET_KEY`, `DEBUG`, `DATABASE_URL` and `OPENAI_API_KEY` from the environment or `.env` via django-environ, and nothing secret is hard-coded → step 3, step 7
 - [x] AC6. `DATABASE_URL` set to a SQLite URL is enough to run the app, so there's no database code in settings → step 3
-- [ ] AC7. `.env.example` lists the four variables with placeholder values → step 5 (manual, D10)
+- [x] AC7. `.env.example` lists the four variables with placeholder values → step 5 (manual, D10)
 - [x] AC8. `make test` runs pytest and passes with at least one test → step 0
 - [x] AC9. `make test ARGS="-k <name>"` runs only the matching tests → step 0
 - [x] AC10. `make lint` (`ruff check .`) and `make format` (`ruff format`) run clean on the generated code → step 0
 - [x] AC11. CLAUDE.md's Commands section matches the real Makefile, and the "added by the scaffold ticket" note is removed → step 4, step 6
-- [ ] AC12. `make test` passes on a fresh clone that has no `.env` file → step 0 (working tree), step 5 (fresh clone, manual; R2)
+- [x] AC12. `make test` passes on a fresh clone that has no `.env` file → step 0 (working tree), step 5 (fresh clone, manual; R2)
 - [x] AC13. `git status` after `make install`, `make migrate`, `make test` and a Tailwind build shows no generated files (venv, `db.sqlite3`, caches, `node_modules/`) as untracked → step 0
 - [x] AC14. With `SECRET_KEY` unset, loading settings fails with an error naming `SECRET_KEY` (from D8) → step 3
 - [x] AC15. With `DATABASE_URL`, `DEBUG` and `OPENAI_API_KEY` unset, settings use SQLite at `BASE_DIR/db.sqlite3`, `DEBUG` is `True` and `OPENAI_API_KEY` is `""` (from D8, D20) → step 3, step 7

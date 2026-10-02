@@ -1,0 +1,5 @@
+<div id="messages"{% if oob %} hx-swap-oob="true"{% endif %}>
+    {% for message in messages %}
+    <p class="mt-4 p-4 bg-green-50 border rounded">{{ message }}</p>
+    {% endfor %}
+</div>

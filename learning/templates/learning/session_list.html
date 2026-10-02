@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="py-16">
+    <h1 class="text-3xl font-bold">Sessions</h1>
+    <p class="mt-4"><a href="{% url 'session_create' %}" class="underline">New session</a></p>
+    <form method="get" action="{% url 'session_list' %}" class="mt-6 flex gap-2"
+          hx-get="{% url 'session_list' %}" hx-trigger="change, submit"
+          hx-target="#session-list" hx-push-url="true">
+        <select name="goal" class="border rounded px-2 py-1">
+            <option value="">All goals</option>
+            {% for g in goals %}
+            <option value="{{ g.pk }}"{% if g.pk == goal_id %} selected{% endif %}>{{ g.title }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="px-3 py-1 border rounded">Filter</button>
+    </form>
+    <div id="session-list" class="mt-6">{% include "learning/_session_list.html" %}</div>
+</section>
+{% endblock %}

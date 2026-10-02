@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "django_htmx",
     "core",
     "accounts",
+    "learning",
 ]
 
 TAILWIND_APP_NAME = "theme"
@@ -122,7 +123,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "Europe/Berlin"
 
 USE_I18N = True
 

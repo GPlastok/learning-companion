@@ -9,6 +9,10 @@
         to pick your cohort and focus areas.
     </p>
     {% endif %}
-    <p class="mt-4 text-gray-600">Nothing here yet.</p>
+    <p class="mt-4">
+        <a href="{% url 'goal_list' %}" class="underline">Your goals</a>
+        ·
+        <a href="{% url 'session_list' %}" class="underline">Your sessions</a>
+    </p>
 </section>
 {% endblock %}

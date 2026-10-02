@@ -17,6 +17,7 @@
         <a href="{% url 'home' %}" class="text-xl font-bold">Learning Companion</a>
         {% if user.is_authenticated %}
         <div class="flex items-center gap-4">
+            <a href="{% url 'goal_list' %}" class="underline">Goals</a>
             <a href="{% url 'profile' %}" class="underline">Profile</a>
             <form action="{% url 'logout' %}" method="post">
                 {% csrf_token %}
@@ -28,6 +29,7 @@
 </nav>
 
 <div class="container mx-auto">
+    {% include "messages.html" %}
     {% block content %}{% endblock %}
 </div>
 </body>

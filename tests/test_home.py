@@ -39,3 +39,18 @@ def test_ac21_nav_has_logo_and_logout(logged_in_client):
         rf'<form[^>]+action="{reverse("logout")}"[^>]+method="post"', content
     )
     assert f'href="{reverse("profile")}"' in content
+
+
+def test_ac40_links_to_goals_and_sessions(logged_in_client):
+    content = logged_in_client.get("/").content.decode()
+
+    nav = content[content.index("<nav") : content.index("</nav>")]
+    assert re.search(rf'<a[^>]+href="{reverse("goal_list")}"[^>]*>\s*Goals\s*</a>', nav)
+    main = content[content.index("</nav>") :]
+    assert f'href="{reverse("goal_list")}"' in main
+    assert f'href="{reverse("session_list")}"' in main
+    assert "Nothing here yet." not in content
+
+    content = logged_in_client.get(reverse("goal_list")).content.decode()
+
+    assert f'href="{reverse("session_list")}"' in content

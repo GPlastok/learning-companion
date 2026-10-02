@@ -1,0 +1,39 @@
+{% load learning_extras %}
+<nav class="flex gap-4">
+    <a href="{% querystring status=None %}" hx-get="{% querystring status=None %}"
+       hx-target="#goal-list" hx-push-url="true"
+       class="underline{% if not status %} font-bold{% endif %}">All</a>
+    {% for value, label in status_choices %}
+    <a href="{% querystring status=value %}" hx-get="{% querystring status=value %}"
+       hx-target="#goal-list" hx-push-url="true"
+       class="underline{% if status == value %} font-bold{% endif %}">{{ label }}</a>
+    {% endfor %}
+    {% if order == "oldest" %}
+    <a href="{% querystring order=None %}" hx-get="{% querystring order=None %}"
+       hx-target="#goal-list" hx-push-url="true" class="ml-auto underline">Newest first</a>
+    {% else %}
+    <a href="{% querystring order='oldest' %}" hx-get="{% querystring order='oldest' %}"
+       hx-target="#goal-list" hx-push-url="true" class="ml-auto underline">Oldest first</a>
+    {% endif %}
+</nav>
+<ul class="mt-6 space-y-2">
+    {% for goal in goals %}
+    <li id="goal-{{ goal.pk }}" class="p-4 bg-white border rounded">
+        <span class="font-bold">{{ goal.title }}</span>
+        <span class="px-2 border rounded">{{ goal.get_status_display }}</span>
+        <span>{{ goal.session_count }} session{{ goal.session_count|pluralize }}</span>
+        <span>{{ goal.total_minutes|duration }}</span>
+        <span class="text-gray-600">Updated {{ goal.updated_at|date:"j M Y" }}</span>
+        <a href="{% url 'goal_edit' goal.pk %}" class="underline">Edit</a>
+        <form method="post" action="{% url 'goal_delete' goal.pk %}" class="inline"
+              hx-post="{% url 'goal_delete' goal.pk %}"
+              hx-confirm="Delete “{{ goal.title }}” and its {{ goal.session_count }} session{{ goal.session_count|pluralize }}?"
+              hx-target="closest li" hx-swap="outerHTML">
+            {% csrf_token %}
+            <button type="submit" class="text-red-700 underline">Delete</button>
+        </form>
+    </li>
+    {% empty %}
+    <li class="text-gray-600">{% if status %}No goals with this status.{% else %}No goals yet.{% endif %}</li>
+    {% endfor %}
+</ul>

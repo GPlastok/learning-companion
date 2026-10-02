@@ -2,7 +2,7 @@ from datetime import date
 
 import pytest
 
-from learning.models import Goal, LearningSession
+from learning.models import Goal, LearningSession, Resource
 
 PASSWORD = "Sup3r-secret-pw"
 
@@ -22,6 +22,16 @@ def signup_data(**overrides):
 
 def goal_data(**overrides):
     data = {"title": "Learn Docker", "description": "", "status": "planned"}
+    data.update(overrides)
+    return data
+
+
+def resource_data(**overrides):
+    data = {
+        "url": "https://www.youtube.com/watch?v=abc123",
+        "title": "Django ORM talk",
+        "type": "video",
+    }
     data.update(overrides)
     return data
 
@@ -94,6 +104,26 @@ def other_session(other_goal):
         date=date(2026, 9, 29),
         duration_minutes=45,
         notes="Borrow checker",
+    )
+
+
+@pytest.fixture
+def resource(goal):
+    return Resource.objects.create(
+        goal=goal,
+        url="https://docs.djangoproject.com/en/5.2/topics/db/models/",
+        title="Django models docs",
+        type="doc",
+    )
+
+
+@pytest.fixture
+def other_resource(other_goal):
+    return Resource.objects.create(
+        goal=other_goal,
+        url="https://doc.rust-lang.org/book/",
+        title="The Rust book",
+        type="doc",
     )
 
 

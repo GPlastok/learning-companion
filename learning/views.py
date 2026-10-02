@@ -3,11 +3,13 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Sum
 from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 from django.views.decorators.vary import vary_on_headers
+from django_htmx.http import HttpResponseClientRedirect
 
-from learning.forms import GoalForm, SessionForm
-from learning.models import Goal, LearningSession
+from learning.forms import GoalForm, ResourceForm, SessionForm
+from learning.models import Goal, LearningSession, Resource
 
 
 def _deleted_response(request, list_name):
@@ -18,13 +20,18 @@ def _deleted_response(request, list_name):
     return redirect(list_name)
 
 
-@login_required
-@vary_on_headers("HX-Request")
-def goal_list(request):
-    goals = Goal.objects.filter(user=request.user).annotate(
+def _goals_with_totals(user):
+    # The session count and total time, shared by the list and the detail page (D22).
+    return Goal.objects.filter(user=user).annotate(
         session_count=Count("sessions"),
         total_minutes=Coalesce(Sum("sessions__duration_minutes"), 0),
     )
+
+
+@login_required
+@vary_on_headers("HX-Request")
+def goal_list(request):
+    goals = _goals_with_totals(request.user)
     # Newest first unless ?order=oldest; any other value means newest (D13).
     order = request.GET.get("order")
     if order == "oldest":
@@ -49,6 +56,21 @@ def goal_list(request):
     if request.htmx and not request.htmx.history_restore_request:
         return render(request, "learning/_goal_list.html", context)
     return render(request, "learning/goal_list.html", context)
+
+
+def _render_goal_detail(request, goal, form):
+    context = {
+        "goal": goal,
+        "resources": goal.resources.prefetch_related("tags"),
+        "form": form,
+    }
+    return render(request, "learning/goal_detail.html", context)
+
+
+@login_required
+def goal_detail(request, pk):
+    goal = get_object_or_404(_goals_with_totals(request.user), pk=pk)
+    return _render_goal_detail(request, goal, ResourceForm())
 
 
 @login_required
@@ -81,6 +103,9 @@ def goal_delete(request, pk):
     goal = get_object_or_404(Goal, pk=pk, user=request.user)
     goal.delete()
     messages.success(request, "Goal deleted.")
+    # From the detail page there's no row to swap, so the browser goes to the list (D19).
+    if request.htmx and request.POST.get("from") == "detail":
+        return HttpResponseClientRedirect(reverse("goal_list"))
     return _deleted_response(request, "goal_list")
 
 
@@ -137,3 +162,41 @@ def session_delete(request, pk):
     session.delete()
     messages.success(request, "Session deleted.")
     return _deleted_response(request, "session_list")
+
+
+@login_required
+@require_POST
+def resource_create(request, pk):
+    goal = get_object_or_404(_goals_with_totals(request.user), pk=pk)
+    form = ResourceForm(request.POST)
+    if form.is_valid():
+        form.instance.goal = goal
+        form.save()
+        messages.success(request, "Resource added.")
+        return redirect("goal_detail", pk=goal.pk)
+    # An invalid post shows the detail page again with the errors (D11).
+    return _render_goal_detail(request, goal, form)
+
+
+@login_required
+def resource_edit(request, pk):
+    # A resource belongs to the user through its goal (D18).
+    resource = get_object_or_404(Resource, pk=pk, goal__user=request.user)
+    form = ResourceForm(request.POST or None, instance=resource)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Resource updated.")
+        return redirect("goal_detail", pk=resource.goal_id)
+    context = {"form": form, "resource": resource}
+    return render(request, "learning/resource_form.html", context)
+
+
+@login_required
+@require_POST
+def resource_delete(request, pk):
+    resource = get_object_or_404(Resource, pk=pk, goal__user=request.user)
+    goal_pk = resource.goal_id
+    resource.delete()
+    messages.success(request, "Resource deleted.")
+    # Without HTMX the browser goes back to the goal's page (D13).
+    return _deleted_response(request, reverse("goal_detail", args=[goal_pk]))

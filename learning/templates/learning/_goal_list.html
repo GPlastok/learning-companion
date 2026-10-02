@@ -19,7 +19,7 @@
 <ul class="mt-6 space-y-2">
     {% for goal in goals %}
     <li id="goal-{{ goal.pk }}" class="p-4 bg-white border rounded">
-        <span class="font-bold">{{ goal.title }}</span>
+        <a href="{% url 'goal_detail' goal.pk %}" class="font-bold underline">{{ goal.title }}</a>
         <span class="px-2 border rounded">{{ goal.get_status_display }}</span>
         <span>{{ goal.session_count }} session{{ goal.session_count|pluralize }}</span>
         <span>{{ goal.total_minutes|duration }}</span>

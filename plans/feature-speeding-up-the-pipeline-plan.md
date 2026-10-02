@@ -68,6 +68,16 @@ Reviewed on 2026-10-02, round 3: no rework left after step 20, and no fourth rou
 
 Observed for step 12: after each stage the session stays on that stage's model. `/manager-tdd` ran on `claude-sonnet-5-5` right after each `/implement-tdd-feature` run, and on `claude-opus-5-5` after `/review-tdd`. So a skill's `model` lasts beyond the skill itself, and each stage still sets its own (D15).
 
+Step 12 checked on 2026-10-02 in #4's session (transcript `c78a479f-….jsonl`), from the session's model-change entries:
+
+- AC6 confirmed: the build switched to `claude-sonnet-5-5` at medium effort, both times it started.
+- AC7 confirmed: both reviewer agents were started with `model: opus`.
+- AC5 fails: `/plan-tdd-feature` ran on Opus, but high effort held only for its first turn. The plan was written at medium after the user's answers. Moved to #21.
+- AC19 fails in part: a `/review-tdd` started in the same turn as a build stayed on Sonnet for its own work; only the reviewer sub-agent ran on Opus. Moved to #21.
+- AC4 still open: no `/refine` has run since #10. The next ticket that runs it checks the Explore agents' model.
+
+The transcript's per-message `model` field says `claude-opus-5-5` throughout, even in the Sonnet stretches, so it can't be used for this check.
+
 ## Decisions
 
 D1. (Q1) The OK on each diff happens at the plan stage, for this ticket's changes only. The plan holds every diff. The user OKs or rejects each one, and the build applies only the OK'd ones. Source: user, 2026-10-02.
@@ -172,9 +182,9 @@ D35. (Q27, R13) After the last step, Record writes `Next: verify.` instead of dr
 - [x] AC2. No skill file changes until the user has OK'd that change. A change the user rejects is not made. → step 19
 - [x] AC3. Every proposed change states how much time it saves and what it costs in safety or quality. → step 11
 - [ ] AC4. `/refine`'s three Explore sub-agents run on Haiku. → step 12
-- [ ] AC5. `/plan-tdd-feature` runs on Opus at high effort. → step 12
-- [ ] AC6. `/implement-tdd-feature` runs on Sonnet at medium effort. → step 12
-- [ ] AC7. `/review-tdd`'s reviewer sub-agent runs on Opus. → step 12
+- [ ] AC5. `/plan-tdd-feature` runs on Opus at high effort. → #21
+- [x] AC6. `/implement-tdd-feature` runs on Sonnet at medium effort. → step 12
+- [x] AC7. `/review-tdd`'s reviewer sub-agent runs on Opus. → step 12
 - [x] AC8. Where a stage's model or effort can't be set from the skill, the user is told the manual way (`/model`, `/effort`) to use before that stage. → step 10
 - [x] AC9. Each question `/plan-tdd-feature` asks carries a suggested default with a one-line reason. → step 6
 - [x] AC10. Questions are asked in plain text as a numbered list, never through `AskUserQuestion`. → step 6
@@ -186,7 +196,7 @@ D35. (Q27, R13) After the last step, Record writes `Next: verify.` instead of dr
 - [x] AC16. Plans `/plan-tdd-feature` writes are in short paragraphs: one idea each, decisions as a lead sentence plus bullets, and Test, Red and Green parts of two or three sentences. → step 7
 - [x] AC17. Each plan step still names the file, test names, concrete inputs, the red reason and the smallest green, so a Sonnet build needs no extra question. → step 7
 - [x] AC18. Every other round-trip cost proposed from the #3 run cites its evidence from that run, and states its time saved and its safety or quality cost, like items 1 to 4. → step 11
-- [ ] AC19. `refine`, `review-tdd` and `manager-tdd` set their own model and effort, so a stage that follows `/implement-tdd-feature` doesn't run on Sonnet. (from D15) → step 12
+- [ ] AC19. `refine`, `review-tdd` and `manager-tdd` set their own model and effort, so a stage that follows `/implement-tdd-feature` doesn't run on Sonnet. (from D15) → #21
 - [x] AC20. "Rest as suggested" accepts every remaining default, and those decisions say "accepted default". (from D5) → step 6
 - [x] AC21. A `NoReverseMatch` for a route the step doesn't add is treated as an error, not as red. (from D7) → step 8
 - [x] AC22. `/plan-tdd-feature` and `/refine` check earlier plans' Decisions before asking, and cite a decision that settles a question instead of asking it. (from D19) → step 7

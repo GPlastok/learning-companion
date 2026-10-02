@@ -74,7 +74,7 @@ Step 12 checked on 2026-10-02 in #4's session (transcript `c78a479f-….jsonl`),
 - AC7 confirmed: both reviewer agents were started with `model: opus`.
 - AC5 fails: `/plan-tdd-feature` ran on Opus, but high effort held only for its first turn. The plan was written at medium after the user's answers. Moved to #21.
 - AC19 fails in part: a `/review-tdd` started in the same turn as a build stayed on Sonnet for its own work; only the reviewer sub-agent ran on Opus. Moved to #21.
-- AC4 still open: no `/refine` has run since #10. The next ticket that runs it checks the Explore agents' model.
+- AC4 confirmed on 2026-10-02 in #5's refine (session 8d099267-….jsonl): all three Explore agents were started with `model: haiku` and ran on `claude-haiku-4-5-20251001`. They took 87–115 s and 24–40 tool calls each; #3's Opus agents took 33–46 s and 4 calls each. The tickets differ, so this is not a fair speed comparison. The user keeps Haiku for its lower cost.
 
 The transcript's per-message `model` field says `claude-opus-5-5` throughout, even in the Sonnet stretches, so it can't be used for this check.
 
@@ -181,7 +181,7 @@ D35. (Q27, R13) After the last step, Record writes `Next: verify.` instead of dr
 - [x] AC1. Every change to a file under `.claude/skills/` is shown to the user as a diff before the file is edited. → step 19
 - [x] AC2. No skill file changes until the user has OK'd that change. A change the user rejects is not made. → step 19
 - [x] AC3. Every proposed change states how much time it saves and what it costs in safety or quality. → step 11
-- [ ] AC4. `/refine`'s three Explore sub-agents run on Haiku. → step 12
+- [x] AC4. `/refine`'s three Explore sub-agents run on Haiku. → step 12
 - [ ] AC5. `/plan-tdd-feature` runs on Opus at high effort. → #21
 - [x] AC6. `/implement-tdd-feature` runs on Sonnet at medium effort. → step 12
 - [x] AC7. `/review-tdd`'s reviewer sub-agent runs on Opus. → step 12

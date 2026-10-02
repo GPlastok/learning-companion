@@ -1,7 +1,7 @@
 ---
 name: manager-tdd
 description: >-
-  Runs a feature through the whole TDD pipeline: /ticket or /refine, /plan-tdd-feature, /implement-tdd-feature and /review-tdd, picking the next stage from the files in plans/ so it can resume at any point. Stops only where a human is needed (open questions, the build's own stops, manual checks, review findings that need a decision) and at the end, where the user runs /ship. Auto-fixes review findings that pass strict rules, for at most two review rounds. Moves the issue's card on the GitHub project board as the stages change, with the user approving each move. When review is clean, ticks the issue's own criteria that the plan has ticked, with the user approving the edit. With no argument, picks the next card from the board, confirms it with the user, and offers the next one when a ticket finishes. Use when the user types /manager-tdd, or asks to run, drive or take a ticket or feature through the pipeline end to end.
+  Runs a feature through the whole TDD pipeline: /ticket or /refine, /plan-tdd-feature, /implement-tdd-feature and /review-tdd, picking the next stage from the files in plans/ so it can resume at any point. Stops only where a human is needed (open questions, the build's own stops, manual checks, review findings that need a decision) and at the end, where the user runs /ship. Auto-fixes review findings that pass strict rules, for at most two review rounds. Moves the issue's card on the GitHub project board as the stages change, without a permission prompt, and names each move. When review is clean, ticks the issue's own criteria that the plan has ticked, also without a prompt. With no argument, picks the next card from the board, confirms it with the user, and offers the next one when a ticket finishes. Use when the user types /manager-tdd, or asks to run, drive or take a ticket or feature through the pipeline end to end.
 argument-hint: "[issue number, or feature name; none picks the next card from the board]"
 allowed-tools: Skill, Read, Glob, Grep, AskUserQuestion, Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git merge-base:*), Bash(git ls-files:*), Bash(git remote:*), Bash(git rev-parse:*), Bash(gh issue view:*), Bash(gh issue edit:*), Bash(gh project list:*), Bash(gh project view:*), Bash(gh project field-list:*), Bash(gh project item-list:*), Bash(gh project item-edit:*)
 ---
@@ -81,13 +81,15 @@ take the first that matches:
 
 | Files say | Stage to run | Card column |
 |---|---|---|
-| No refinement | `/ticket <n>` or `/refine <name>` | Refined after it |
+| No refinement | `/ticket <n>` or `/refine <name>` | Todo |
 | Refinement, no plan | `/plan-tdd-feature <name>` | Refined |
 | Plan has open `→ plan` findings in Review | `/plan-tdd-feature <name>` (update) | Refined |
 | Refinement Progress points to open `→ refine` findings | `/refine <name>` (update) | Todo |
 | Plan Progress has a `Next: step <n>` | `/implement-tdd-feature <name>` | In Progress |
 | Plan Progress says `Built on` | `/review-tdd <name> --auto` | Review |
 | Progress says `Reviewed on ... no rework` | done: section 6 | Review |
+
+The card column is where the card is while that stage runs.
 
 `/ticket` hands over to `/refine` itself. After `/refine`, go straight to
 `/plan-tdd-feature`: it asks the open questions, so that's where the user answers them.
@@ -97,6 +99,14 @@ take the first that matches:
 Run the stage, then work out the stage again from the files and run the next one. Keep going
 until a skill stops for the user or the feature is done. Before each stage, say in one line
 which stage is next and why (`Plan says Built on 2026-10-01, so reviewing.`).
+
+The card follows the stages without asking (section 5):
+
+- **Before each stage**, compare the card's column with that stage's column in section 2.
+  If they differ, move the card first, then run the stage.
+- **When a stage finishes** (the skill ran to its end without stopping for the user), work
+  out the next stage from the files and move the card to that stage's column. When a skill
+  stops for the user, the card stays where it is.
 
 Invoke each skill with the `Skill` tool, passing the feature name (and `--auto` for
 `review-tdd`). Let it run to its end. Don't answer its questions for the user, and don't
@@ -135,8 +145,8 @@ rules. The manager adds the last two:
 
 The board shows where the feature is, so move its card when the stage changes, using the
 column in section 2. Only the manager moves cards; the other skills never do. Every move
-goes through `gh project item-edit`, which the project's settings make the user approve, so
-say which move you're asking for.
+goes through `gh project item-edit`, which the project's settings allow without a prompt,
+so name each move you make.
 
 1. Get the issue number from the refinement's `Source: #<n>` line (or `$ARGUMENTS`). No
    issue: skip all card moves and say so once.
@@ -144,14 +154,17 @@ say which move you're asking for.
    several, use the one whose `gh project item-list` contains the issue, and ask if that's
    still ambiguous.
 3. Look up, once per run: the project ID (`gh project view <number> --owner <owner> --format
-   json`), the `Status` field and its options (`gh project field-list ... --format json`),
-   and the item ID of the issue's card (`gh project item-list ... --format json`, the item
-   whose `content.number` is the issue).
+   json`) and the `Status` field and its options (`gh project field-list ... --format
+   json`). Look up per issue: the item ID of the issue's card (`gh project item-list ...
+   --format json`, the item whose `content.number` is the issue).
 4. Match the column by name, ignoring case. A column that doesn't exist: skip that move and
-   name it in the report. The card not on the board: skip and say so (the board's
-   Auto-add workflow should add it).
+   name it in the report. Just before each move, re-read the card's status with `gh
+   project item-list`: someone may have moved it on the board since. The card not on the
+   board: skip and say so (the board's Auto-add workflow should add it). Card in Done:
+   skip the move and say so. The card already in the target column: skip the move.
 5. Move: `gh project item-edit --id <item> --project-id <project> --field-id <status field>
-   --single-select-option-id <option>`.
+   --single-select-option-id <option>`. Then write one line with the card and both
+   columns: `Card #15: Refined → In Progress.`
 
 Never move a card to Done. GitHub's workflows do that when the PR merges or the issue
 closes. If a move fails, report it and carry on; the code matters more than the card.
@@ -193,7 +206,7 @@ example after the user confirms manual checks that were pending at the first fin
    ISSUE_BODY_END
    ```
 
-   `gh issue edit` is an `ask` rule, so the user approves it. If it fails, report it and
+   `gh issue edit` runs without a permission prompt. If it fails, report it and
    carry on, as with a card move.
 
 **Offer the next card.** When the feature finished (review clean) and there's a board, run

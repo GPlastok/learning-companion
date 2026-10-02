@@ -86,13 +86,13 @@ Rules per stage:
 Applies to every stage:
 
 - Claude may not read or edit `.env` or `.env.*` (`deny` rules).
-- `git push`, `gh pr create`, `gh pr comment`, `gh issue create`, `gh issue edit`,
-  `gh issue comment` and `gh project item-edit` always ask first (`ask` rules).
+- `git push`, `gh pr create`, `gh pr comment`, `gh issue create` and `gh issue comment`
+  always ask first (`ask` rules).
 - The `PreToolUse` hook `block-ai-attribution.sh` rejects any commit, PR, issue or comment
   that carries a `Co-Authored-By` trailer or a "Generated with Claude" line, and
   `settings.json` turns the default attribution off.
-- `make test`, `make test ARGS=...`, `make lint`, `make format`, `git status`, `git diff`
-  and `git log` run without a prompt.
+- `make test`, `make test ARGS=...`, `make lint`, `make format`, `git status`, `git diff`,
+  `git log`, `gh issue edit` and `gh project item-edit` run without a prompt.
 
 ## Board
 
@@ -106,12 +106,13 @@ GitHub project #1 "Learning Companion". Columns:
 | Review      | the build is done and under review, or reviewed clean and waiting for `/ship` and the PR |
 | Done        | the PR merged or the issue closed (GitHub's workflow moves it)                           |
 
-Only `/manager-tdd` moves cards, and each move goes through `gh project item-edit`, which
-you approve. No skill moves a card to Done. `/manager-tdd` with no argument picks the next
+Only `/manager-tdd` moves cards, through `gh project item-edit`, without a prompt. It moves
+a card when a stage finishes, checks the card's column when a stage starts, and names each
+move. No skill moves a card to Done. `/manager-tdd` with no argument picks the next
 card: In Progress first, then Review, then the top of Refined, then the top of Todo. "Top"
 is the card order `gh project item-list` returns, which matches the board as long as the
 board view has no sort set.
 
 When review is clean, `/manager-tdd` also ticks the issue's own criteria (the ones `/ticket`
-copied) that the plan has ticked, through `gh issue edit`, which you approve. It only ticks,
+copied) that the plan has ticked, through `gh issue edit`, without a prompt. It only ticks,
 never unticks, and leaves the refinement's added criteria out of the issue.

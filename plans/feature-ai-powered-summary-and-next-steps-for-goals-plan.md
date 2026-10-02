@@ -11,8 +11,7 @@ In scope: the two actions, the sidebar with a follow-up chat kept in the Django 
 Left for later:
 - storing replies in the database (D14, #29);
 - a credit limit (D16, #28);
-- Markdown rendering (#27);
-- a way to clear the chat (Q20, open).
+- Markdown rendering (#27).
 
 ## Progress
 
@@ -21,7 +20,7 @@ Next: step 0.
 
 ## Decisions
 
-The user answered Q1-Q19 on 2026-10-02. Q20 is open and blocks nothing.
+The user answered Q1-Q20 on 2026-10-02.
 
 ### The API call
 
@@ -158,7 +157,14 @@ Source: plan, following D9 and D25.
 
 D28. Each new turn is appended rather than replacing the panel. All three forms get `hx-swap="beforeend"` on `#ai-chat`, and the HTMX response holds only the new turn: the question, then the reply. Without HTMX, the whole page re-renders and shows every stored turn. The chat form also gets `hx-on::after-request="this.reset()"`, htmx's own attribute, so the textbox empties after sending. No script file is added. Source: plan.
 
-Open: Q20. Should the user be able to clear a goal's chat (a "Clear chat" button that removes the session key)? Without one, a chat ends only at logout. Suggested: yes, added by a plan update if wanted. It blocks no criterion here.
+D29. (Q20) A "Clear chat" button empties a goal's chat.
+
+- Route: `goals/<int:pk>/chat/clear/`, named `goal_chat_clear`, `@login_required` above `@require_POST`. The goal is looked up owner-scoped, so another user's or a missing goal is 404.
+- It removes `f"ai_chat_{goal.pk}"` from the session and sends no request to OpenAI.
+- The button is a POST form with `hx-post`, `hx-confirm="Clear this chat?"`, `hx-target="#ai-chat"` and `hx-swap="innerHTML"`, following the delete forms (#4 D9).
+- With HTMX, the response is an empty `HttpResponse("")`, so the panel empties in place. Without HTMX, it redirects to `goal_detail`.
+
+Source: user ("add clear chat"), 2026-10-02; the mechanism: plan.
 
 ### Tests
 
@@ -204,6 +210,7 @@ D24. `.env.example` gets `OPENAI_MODEL=gpt-4o-mini` under `OPENAI_API_KEY`. Clau
 - [ ] AC25. A failed call is logged as a warning with the error's class name, never the key. (from D18) → step 9
 - [ ] AC26. Each successful action adds its question and reply as a turn in the Django session for that goal, keeping the last 10 turns; the detail page shows them again after a reload, and a new turn is appended in the panel. (from D25, D26, D28) → step 10
 - [ ] AC27. Follow-up messages follow the actions' rules: login, 404 for another user's or a missing goal, the empty key, the failure message, and escaped output, with no request where the actions send none. (from D27) → step 11
+- [ ] AC28. "Clear chat" removes the goal's stored turns after a confirm popup, sends no request, and leaves other goals' chats alone; another user's or a missing goal gives 404. (from D29) → step 12
 
 ## Step 0: groundwork
 
@@ -538,6 +545,32 @@ In `tests/test_goal_ai.py`, with `CHAT = "goal_chat"`:
 
 **Refactor.** None.
 
+## Step 12: AC28, clear the chat
+
+**Test.** In `tests/test_goal_ai.py`, with `CLEAR = "goal_chat_clear"`:
+
+- `test_ac28_clear_chat_with_htmx(logged_in_client, goal, user, fake_chat)`:
+  - store `turn("Generate summary", "Nice work.")` for `goal`;
+  - create the user's second goal `"Learn SQL"` and store a turn for it too;
+  - post to `goal_chat_clear` for `goal` with HTMX;
+  - expect 200 with an empty body, `f"ai_chat_{goal.pk}"` gone from the session, the second goal's key still there, and `fake_chat.calls == []`.
+- `test_ac28_clear_chat_without_htmx(logged_in_client, goal)`: store a turn and post without HTMX. Expect a 302 to `reverse("goal_detail", args=[goal.pk])`, and the detail page no longer shows `"Nice work."`.
+- `test_ac28_clear_button(logged_in_client, goal)`: the page has a form with `hx-post` for `goal_chat_clear`, `hx-confirm="Clear this chat?"`, `hx-target="#ai-chat"` and `hx-swap="innerHTML"`, and the button `Clear chat`.
+- `test_ac28_clear_rules`:
+  - over `target` in `["other", "missing"]`: 404;
+  - anonymous: the login redirect with `?next=`;
+  - a GET: 405.
+
+**Red.** Every test fails with `NoReverseMatch` for `goal_chat_clear`.
+
+**Green.**
+
+- `learning/urls.py`: `path("goals/<int:pk>/chat/clear/", views.goal_chat_clear, name="goal_chat_clear")`.
+- `learning/views.py`: `goal_chat_clear` (`@login_required`, `@require_POST`). It runs `get_object_or_404(Goal, pk=pk, user=request.user)` and `request.session.pop(f"ai_chat_{goal.pk}", None)`. It returns `HttpResponse("")` for `request.htmx`, else `redirect("goal_detail", pk=goal.pk)`. Import `HttpResponse` from `django.http`.
+- `goal_detail.html`: below the chat form, add the clear form as in the test, with `{% csrf_token %}` and the button `Clear chat` (`text-red-700 underline`).
+
+**Refactor.** None.
+
 ## Files
 
 New:
@@ -552,8 +585,8 @@ Changed:
 - `requirements.txt`: `openai==3.24.0`.
 - `learning_companion/settings.py`: `OPENAI_MODEL`.
 - `learning_companion/settings_test.py`: the fake key.
-- `learning/urls.py`: `goal_summary`, `goal_next_steps`, `goal_chat`.
-- `learning/views.py`: the three views, `_ai_response`, `_turns`, `_add_turn`, `_render_goal_detail`'s `ai_context`, `sessions` and `chat`, the logger.
+- `learning/urls.py`: `goal_summary`, `goal_next_steps`, `goal_chat`, `goal_chat_clear`.
+- `learning/views.py`: the four views, `_ai_response`, `_turns`, `_add_turn`, `_render_goal_detail`'s `ai_context`, `sessions` and `chat`, the logger.
 - `learning/templates/learning/goal_detail.html`: the grid, the sidebar with the stored turns and the chat form, the sessions list.
 - `tests/conftest.py`: `block_openai`, `FakeChat`, `fake_chat`.
 - `tests/test_settings.py`: `OPENAI_MODEL` in `SCRIPT`, the AC12 and AC13 tests.
@@ -578,3 +611,4 @@ Manual checks (D23), with `make dev`:
 - M5. No key (AC8). With `OPENAI_API_KEY` removed from `.env` and the server restarted, either button shows the "not configured" message in red.
 - M6. Sessions on the page (AC19). The goal's sessions show under the actions. Deleting one asks first and removes the row.
 - M7. The chat (AC21, AC26). With a real key, generate a summary, then ask "What should I focus on this week?". The answer refers to the goal and appears under the summary, and the textbox empties. Reload: both turns are still there. Open another goal: its panel is empty. Log out and back in: the chat is gone.
+- M8. Clear chat (AC28). With a few turns in the panel, click "Clear chat". A popup asks "Clear this chat?". OK empties the panel, and a reload keeps it empty. Cancel changes nothing.

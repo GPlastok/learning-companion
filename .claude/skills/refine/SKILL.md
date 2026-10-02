@@ -69,7 +69,7 @@ a normal result, not a failure: the plan's step 0 sets the project up. Say so in
 ## 3. Launch three sub-agents in one message
 
 Send all three Agent calls in a single message so they run concurrently. Use the `Explore`
-agent type with `model: haiku`. Give each one the feature description, any supplied criteria and the stack
+agent type with `model: sonnet`. Give each one the feature description, any supplied criteria and the stack
 details from step 2. Tell each to report facts with `path:line` references, to write "not found" instead of
 guessing, and to find its own starting points, since you don't know the layout.
 

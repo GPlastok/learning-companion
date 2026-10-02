@@ -57,7 +57,7 @@ you and moves the board card.
 
 Models: each skill sets its own in frontmatter. `/refine`, `/plan-tdd-feature`,
 `/review-tdd` and `/manager-tdd` run on Opus at high effort, and `/implement-tdd-feature`
-on Sonnet at medium. `/refine`'s Explore agents run on Haiku and `/review-tdd`'s reviewer
+on Sonnet at medium. `/refine`'s Explore agents run on Sonnet and `/review-tdd`'s reviewer
 on Opus. If a stage runs on the wrong model, set it by hand before the stage:
 `/model opus` and `/effort high`, or `/model sonnet` and `/effort medium` for the build.
 

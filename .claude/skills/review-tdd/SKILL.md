@@ -1,8 +1,10 @@
 ---
 name: review-tdd
 description: >-
-  Reviews a feature after /implement-tdd-feature has built it. A fresh sub-agent reads the branch diff against the plan and checks code quality, that every ticked acceptance criterion has a test that would catch a regression, and that the build stayed inside the plan. Each finding gets a route (rework in implement, plan change, refine, user decision or follow-up ticket) and an auto-fix verdict. After the user accepts findings, it records them in the plan's Review section and adds rework steps that /implement-tdd-feature builds test-first. Never edits code, commits, posts to GitHub or moves cards. Use when the user types /review-tdd, asks to review a built feature or its branch, or when /manager-tdd reaches the review stage.
+  Reviews a feature after /implement-tdd-feature has built it. A fresh sub-agent reads the branch diff against the plan and checks code quality, that every ticked acceptance criterion has a test that would catch a regression, and that the build stayed inside the plan. Each finding gets a route (rework in implement, plan change, plan-wording fix, refine, user decision or follow-up ticket) and an auto-fix verdict. After the user accepts findings, it records them in the plan's Review section and adds rework steps that /implement-tdd-feature builds test-first. Never edits code, commits, posts to GitHub or moves cards. Use when the user types /review-tdd, asks to review a built feature or its branch, or when /manager-tdd reaches the review stage.
 argument-hint: "<feature name> [--auto]"
+model: opus
+effort: high
 allowed-tools: Agent, Read, Glob, Grep, Write, Edit, Skill, AskUserQuestion, Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git merge-base:*), Bash(git ls-files:*), Bash(git rev-parse:*), Bash(git symbolic-ref:*)
 ---
 
@@ -49,7 +51,7 @@ branch holds the feature.
 ## 3. Run the reviewer in a fresh sub-agent
 
 The session that built the feature is the worst judge of it. Even when this session didn't
-build it, the reviewer should start clean. Launch one `general-purpose` agent and give it:
+build it, the reviewer should start clean. Launch one `general-purpose` agent with `model: opus` and give it:
 the plan path, the refinement path, the build log path, the base commit, the list of changed
 and new files, the project's guidance files (`CLAUDE.md`, `AGENTS.md`) and the brief below.
 
@@ -98,6 +100,7 @@ Give each finding a **route**, by its cause:
 |---|---|
 | The code is wrong or under-tested, the plan is right | `implement`: a rework step |
 | The plan or its criteria are wrong or incomplete | `plan`: re-run `/plan-tdd-feature` |
+| Only the plan's wording is off; no criterion, decision meaning or step changes | `plan-text`: fixed in the plan by this skill |
 | The refinement's facts about the codebase are wrong | `refine`: re-run `/refine` |
 | A behaviour nobody decided, or a trade-off | `user`: a question, numbered after the plan's last Q |
 | Worth doing, not needed for this feature (most nits) | `follow-up`: a new ticket via `/new-ticket` |
@@ -129,6 +132,10 @@ No findings: skip to section 7.
 
 Edit `plans/feature-<slug>-plan.md` only. Never edit source, tests, the refinement (apart
 from the one Progress line below), or decision records.
+
+For an accepted `plan-text` finding, make the wording fix in the plan yourself and mark
+the finding `→ plan updated <date>`. If the fix turns out to change a criterion, a
+decision's meaning or a step, it is a `plan` finding instead.
 
 **Review section.** Add or extend `## Review`, placed after the last step and before
 `## Files`. One heading per round, one line per finding, rejected ones included so nobody
@@ -181,6 +188,7 @@ In a few lines:
 
 - the verdict: **clean**, **rework** (steps added), or **blocked** (plan, refine or user
   routes open);
+  accepted `plan-text` fixes don't block: with only those, the verdict is clean;
 - the findings by route, with numbers, and how many were dropped as unconfirmed;
 - manual checks still pending from the build;
 - the next command: `/implement-tdd-feature <feature>` for rework, `/plan-tdd-feature` or

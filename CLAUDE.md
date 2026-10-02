@@ -55,6 +55,12 @@ you and moves the board card.
 | 6   | `/review-tdd`            | the plan's Review section and rework steps                                      | findings are recorded                               |
 | 7   | `/ship`                  | a commit of the staged changes                                                  | committed, or a test/lint failure                   |
 
+Models: each skill sets its own in frontmatter. `/refine`, `/plan-tdd-feature`,
+`/review-tdd` and `/manager-tdd` run on Opus at high effort, and `/implement-tdd-feature`
+on Sonnet at medium. `/refine`'s Explore agents run on Haiku and `/review-tdd`'s reviewer
+on Opus. If a stage runs on the wrong model, set it by hand before the stage:
+`/model opus` and `/effort high`, or `/model sonnet` and `/effort medium` for the build.
+
 Rules per stage:
 
 1. **`/new-ticket`** drafts the issue from your words only and invents no criteria. It is
@@ -67,17 +73,19 @@ Rules per stage:
    "not found" for each area.
 4. **`/plan-tdd-feature`** asks the open questions (Q1, Q2, ...), records answers as
    decisions (D1, ...) and writes one red-green step per behaviour, each naming its ACs.
+   Each question carries a suggested default; "rest as suggested" accepts the rest.
    It writes no code or tests. For ticket 1 its step 0 creates the Django project, the
    tooling and a first passing test.
 5. **`/implement-tdd-feature`** builds the plan step by step: tests first, seen red for
-   the planned reason, then the smallest green, then the whole suite. It only builds what
+   the planned reason (for a new route, `NoReverseMatch` for that route), then the
+   smallest green, then the whole suite. It only builds what
    the plan names and never installs anything the plan doesn't list. It stops on the
    default branch, a stale plan, a test that passes too early, or a plan/code mismatch.
    It lists manual checks at the end and doesn't commit. The `Stop` hook
    `check-plan-progress.sh` blocks once if code changed after the newest plan was last
    written, so Progress stays current.
 6. **`/review-tdd`** runs a fresh sub-agent over the branch diff and the plan. It routes
-   each finding (implement, plan, refine, user, follow-up) and writes only the plan. It
+   each finding (implement, plan, plan-text, refine, user, follow-up) and writes only the plan. It
    never edits code, commits or moves cards.
 7. **`/ship`** runs `make test` and `make lint`, stops at the first failure, then commits
    only what is staged. Only you can run it (`disable-model-invocation`). Pushing and the

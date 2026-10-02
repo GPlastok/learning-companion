@@ -2,6 +2,8 @@
 name: refine
 description: Studies the codebase before a new feature is built. Launches three sub-agents at once to survey the route structure, the data layer and the test setup, then writes the findings and the feature's acceptance criteria to plans/feature-<feature-name>-refinement.md. In a repo with no project yet, it skips the survey and records "not found". Does not plan or implement. Use when the user types /refine, says "use refine" or says "study the codebase", including when they name a feature they are about to build.
 argument-hint: "<feature name, and optionally a sentence on what it should do, or acceptance criteria you already have>"
+model: opus
+effort: high
 allowed-tools: Agent, Read, Glob, Grep, Write, Bash(ls:*), Bash(git ls-files:*), Bash(git log:*), Bash(git status:*)
 ---
 
@@ -67,7 +69,7 @@ a normal result, not a failure: the plan's step 0 sets the project up. Say so in
 ## 3. Launch three sub-agents in one message
 
 Send all three Agent calls in a single message so they run concurrently. Use the `Explore`
-agent type. Give each one the feature description, any supplied criteria and the stack
+agent type with `model: haiku`. Give each one the feature description, any supplied criteria and the stack
 details from step 2. Tell each to report facts with `path:line` references, to write "not found" instead of
 guessing, and to find its own starting points, since you don't know the layout.
 
@@ -149,7 +151,9 @@ constraints from the project's guidance files and decision records.
 
 ## Open questions
 Things the codebase can't answer, including behaviour the acceptance criteria couldn't
-pin down. Phrase each as a question. Don't answer it or recommend an option.
+pin down. Phrase each as a question. Don't answer it or recommend an option. Before
+listing one, check the `## Decisions` of earlier `plans/feature-*-plan.md`: a question an
+earlier decision settles goes under "Patterns to follow" with its citation (`ticket-3 D1`).
 
 1. <question>
 ```

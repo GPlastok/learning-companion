@@ -2,7 +2,9 @@
 name: plan-tdd-feature
 description: Turns a /refine refinement file into a test-driven build plan. Reads plans/feature-<feature-name>-refinement.md, asks the user any open questions it still has, then writes plans/feature-<feature-name>-plan.md with one red-green step per function or behaviour, each listing the acceptance criteria it covers, and runs /unslop on it. In a repo with no project yet, its step 0 sets up the project, its tooling and a first passing test. Writes no code or tests. Use when the user types /plan-tdd-feature, asks for a TDD plan, or says a refined feature is ready to plan. If no refinement file exists, it sends the user to /refine first.
 argument-hint: "<feature name, as given to /refine>"
-allowed-tools: Read, Glob, Grep, Write, Edit, Skill, AskUserQuestion, Bash(ls:*), Bash(git log:*), Bash(git status:*)
+model: opus
+effort: high
+allowed-tools: Read, Glob, Grep, Write, Edit, Skill, Bash(ls:*), Bash(git log:*), Bash(git status:*)
 ---
 
 # Plan a TDD feature
@@ -70,17 +72,21 @@ rather than picking an answer yourself.
 For each question:
 
 1. Check whether it's already answered: in the conversation, in `$ARGUMENTS`, in an
-   existing plan file, or because the code now settles it. Note where the answer came
-   from.
-2. Ask the user all the unanswered ones together. Use `AskUserQuestion` (up to four
-   per call) when a question has a few natural answers, and offer the options the
-   refinement and the code suggest. Ask in plain text when it's open-ended. Start each
-   question with its number (`Q3. Should the file end with a newline?`), and in plain
-   text use a numbered list so the user can answer by number. Don't mark one option as
-   recommended. The refinement deliberately left the choice to the user.
+   existing plan file, in the `## Decisions` of earlier `plans/feature-*-plan.md`, or
+   because the code now settles it. Note where the answer came from, and cite an
+   earlier ticket's decision by ticket and number (`ticket-3 D1`) instead of asking again.
+2. Ask the user all the unanswered ones together, in plain text as a numbered list.
+   Never use `AskUserQuestion`. Start each question with its number (`Q3. Should the
+   file end with a newline?`) and give the options the refinement and the code suggest.
+   End each question with a suggested default and a one-line reason (`Suggested: (a),
+   it matches how the profile page does it.`), so the user only answers where they
+   disagree. The suggestion is not a decision: wait for the user's reply.
 3. Record every answer as a numbered decision (D1, D2, ...) in the plan, with the
    question number and its source: `D1. (Q1) <question>: <answer>. Source: user,
-   2026-09-29.` Decisions that come from the code, not from a question, have no Q.
+   2026-09-29.` A reply like "rest as suggested" accepts every remaining default;
+   record those as `Source: user (accepted default), <date>`. A question the reply
+   doesn't cover, and doesn't accept in bulk, is still open. Decisions that come from
+   the code, not from a question, have no Q.
 4. If an answer implies behaviour none of the existing criteria cover, add a new
    criterion and mark it `(from D<n>)`.
 5. If the user skips a question or says "not yet", don't guess. Mark every criterion
@@ -125,10 +131,13 @@ Every step has the same parts:
 - **Red.** The exact reason the tests fail before the code exists, for example "fails on
   the assertion: `format_story` returns an empty string" or "fails: the response has no
   `ended` field". A test that fails for the wrong reason, such as an import error or a
-  typo, proves nothing. If a stub is needed so the test fails on its assertion, that stub
-  belongs to step 0. If some rows already pass because of an earlier step, say which ones.
+  typo, proves nothing. A step that adds a route can name `NoReverseMatch` for that route
+  as its red: don't plan a stub view only to reach an assertion. Any other stub needed so
+  the test fails on its assertion belongs to step 0. If some rows already pass because of
+  an earlier step, say which ones.
 - **Green.** The smallest change that makes this step's tests pass without breaking the
-  earlier ones, with the file and function. Don't design ahead for later steps.
+  earlier ones, with the file and function. Don't design ahead for later steps, and don't
+  plan a link to a route a later step adds: leave it to that step, or reorder the steps.
 - **Refactor.** Only if there's a real cleanup at this point. Otherwise "none".
 
 Order the steps so each builds on the last: the plain happy path first, then edge cases,
@@ -166,7 +175,18 @@ a person can see, become manual checks.
 ## 5. Write the plan
 
 Write `plans/feature-<slug>-plan.md`. Match the existing plans in `plans/`: short,
-factual, real paths and names. Use these sections in this order:
+factual, real paths and names. Split the text into short paragraphs, one idea each.
+This is about layout, not length: keep every detail the plan needs, and break it up.
+
+- a decision is a short lead sentence, with bullets for its parts;
+- a Test, Red or Green part is two or three sentences, with bullets for lists of
+  fields, routes, files or inputs.
+
+The build may run on a smaller model, so each step names the file, the test names,
+the concrete inputs, the exact red reason and the smallest green. A builder who reads
+only that step should need no question.
+
+Use these sections in this order:
 
 ```markdown
 # <Feature name>: TDD plan
@@ -176,7 +196,8 @@ What's being built, in two or three sentences, with a link to the refinement fil
 branch if there is one. What's in scope and what's left for later.
 
 ## Progress
-Plan written on <date>. Nothing built yet. Next: step 0 (or step 1).
+Plan written on <date>. Nothing built yet.
+Next: step 0 (or step 1).
 No test suite yet: step 0 creates it. (Only for a setup step 0.)
 
 ## Decisions

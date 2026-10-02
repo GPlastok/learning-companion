@@ -3,6 +3,8 @@ name: manager-tdd
 description: >-
   Runs a feature through the whole TDD pipeline: /ticket or /refine, /plan-tdd-feature, /implement-tdd-feature and /review-tdd, picking the next stage from the files in plans/ so it can resume at any point. Stops only where a human is needed (open questions, the build's own stops, manual checks, review findings that need a decision) and at the end, where the user runs /ship. Auto-fixes review findings that pass strict rules, for at most two review rounds. Moves the issue's card on the GitHub project board as the stages change, without a permission prompt, and names each move. When review is clean, ticks the issue's own criteria that the plan has ticked, also without a prompt. With no argument, picks the next card from the board, confirms it with the user, and offers the next one when a ticket finishes. Use when the user types /manager-tdd, or asks to run, drive or take a ticket or feature through the pipeline end to end.
 argument-hint: "[issue number, or feature name; none picks the next card from the board]"
+model: opus
+effort: high
 allowed-tools: Skill, Read, Glob, Grep, AskUserQuestion, Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git merge-base:*), Bash(git ls-files:*), Bash(git remote:*), Bash(git rev-parse:*), Bash(gh issue view:*), Bash(gh issue edit:*), Bash(gh project list:*), Bash(gh project view:*), Bash(gh project field-list:*), Bash(gh project item-list:*), Bash(gh project item-edit:*)
 ---
 
@@ -85,7 +87,7 @@ take the first that matches:
 | Refinement, no plan | `/plan-tdd-feature <name>` | Refined |
 | Plan has open `→ plan` findings in Review | `/plan-tdd-feature <name>` (update) | Refined |
 | Refinement Progress points to open `→ refine` findings | `/refine <name>` (update) | Todo |
-| Plan Progress has a `Next: step <n>` | `/implement-tdd-feature <name>` | In Progress |
+| Plan Progress has a `Next:` line (`Next: step <n>` or `Next: verify`) | `/implement-tdd-feature <name>` | In Progress |
 | Plan Progress says `Built on` | `/review-tdd <name> --auto` | Review |
 | Progress says `Reviewed on ... no rework` | done: section 6 | Review |
 

@@ -2,6 +2,8 @@
 name: implement-tdd-feature
 description: Builds a feature test-first from the plan /plan-tdd-feature wrote. Reads plans/feature-<feature-name>-plan.md, resumes from its Progress section, and for each step writes the planned tests, runs them red, writes the smallest code that turns them green, runs the whole suite, then ticks the step's acceptance criteria, updates Progress and appends to a build log. Runs the whole plan in one go and stops only when a human is needed. Manual checks are collected and listed at the end. Doesn't commit. Use when the user types /implement-tdd-feature, asks to build, implement or start coding a planned feature, or says a TDD plan is ready to build. If there's no plan, it sends the user to /plan-tdd-feature (or /refine) first.
 argument-hint: "<feature name, as given to /refine and /plan-tdd-feature>"
+model: sonnet
+effort: medium
 allowed-tools: Read, Glob, Grep, Write, Edit, Skill, AskUserQuestion, Bash
 ---
 
@@ -121,15 +123,21 @@ run yet. Skip the baseline here and run it right after step 0 instead (section 4
 
 **Build log.** Start or continue `plans/feature-<slug>-build-log.md`, next to the plan.
 Its first line names the plan, and each run adds a dated heading. Under it, append one
-line for every test, lint, type-check or build command you run: the step, the command,
-and what it showed (`Step 3 red: make test ARGS="-k test_ac7" … 3 failed, all on the
-planned assertion`). Add one line for each stop and each answer the user gave. Progress says
+line per red and one per green for each step, plus one per check in Verification: the
+step, the command, and what it showed (`Step 3 red: make test ARGS="-k test_ac7" … 3
+failed, all on the planned assertion`). A rerun goes into the same line (`… 4 failed on
+the missing template, then 4 failed on the planned assertion`). Add one line for each stop
+and each answer the user gave. Progress says
 where the build stands, and the log shows how it got there: that each test really was
 red first, and what the checks said.
 
 ## 4. Build one step at a time
 
 Work through step 0 (if the plan has one) and then every numbered step, in order.
+
+**Output.** For every test, lint, type-check or build command, show enough output to read
+a failure in the same call: pipe through `2>&1 | tail -n 40`, not `tail -3` or a count of
+matching lines.
 
 **Setup step 0** (`## Step 0: project setup`, with Setup, First test and Check parts) is
 built differently, because there's no suite to go red against yet:
@@ -156,6 +164,9 @@ For every other step:
    - A test fails for a different reason (an import error, a typo, a wrong helper): fix
      the test, not the code, and run it again. A test that fails for the wrong reason
      proves nothing about the behaviour.
+   - A step that adds a route: `NoReverseMatch` naming that route is a valid red, and no
+     stub is added to get past it. `NoReverseMatch` naming any other route is a wrong
+     reason: fix it (leave out a link to a later step's route) and run again.
    - A test the plan says should fail passes instead: **stop and report it.** Show the
      test, what the plan expected, and the output. Either the behaviour already exists,
      or the test doesn't check what the plan thinks it does. Either way the user
@@ -168,17 +179,38 @@ For every other step:
    import what, or what a given kind of file may export). Then run the whole suite. It
    must be all green, including every earlier test. If it isn't, fix the code, not an
    earlier test. If the plan's Green can't make the tests pass, go to section 5.
+   When the step's Refactor is "none", this run is the Record call (step 6).
 4. **Refactor.** Only what the step's **Refactor** part says, then run the whole suite
-   again. "None" means none.
+   again; this run is the Record call. "None" means none.
 5. **Manual check.** If the step has one, don't tick its criteria. Keep the plan's
    numbered, click-by-click checks for the end-of-run list. If the step also has tests,
    the criterion waits for both.
-6. **Record.** Edit the plan:
+6. **Record.** Record in the step's last whole-suite run (Green's, or Refactor's), in the
+   same Bash call, so recording never costs a call of its own. Only when the suite passes:
+   tick, append the step's red line (written from the red run you saw) and green line,
+   and move `Next:`. Check that Progress really changed:
+
+   ```bash
+   out=$(make test 2>&1); code=$?; printf '%s\n' "$out" | tail -n 40
+   if [ $code -eq 0 ]; then
+     n=$(printf '%s\n' "$out" | grep -oE '[0-9]+ passed' | tail -1)
+     plan=plans/feature-<slug>-plan.md; log=plans/feature-<slug>-build-log.md
+     sed -i 's/^- \[ \] AC7\./- [x] AC7./' "$plan"
+     printf '%s\n' '- Step 3 red: make test ARGS="-k test_ac7" … 3 failed, all on the planned assertion' \
+       "- Step 3 green: make test … $n" >> "$log"
+     sed -i "/^## Progress/,/^## /s/Next: step 3\./Step 3 done: $n, 42 before the build.\nNext: step 4./" "$plan"
+     sed -n '/^## Progress/,/^## /p' "$plan" | grep -q "Next: step 4\." || echo "Progress NOT updated: fix it with an Edit"
+   fi
+   ```
+
+   Use the project's suite command in place of `make test`. After the last step, write
+   `Next: verify.` instead (and check for that); section 7 replaces it with `Built on`.
+   A deviation from the plan gets its own Edit to Progress afterwards. What the record holds:
    - Tick the criteria this step's tests cover (`- [ ]` becomes `- [x]`). Tick only
      criteria whose tests you saw pass, and none that wait for a manual check.
-   - Append the step's commands and results to the build log, if you haven't as you went.
-   - Update **Progress**: which step is done, the test count (`Step 3 done: 51 tests
-     pass, 42 before the build plus 9 new.`), anything that went differently from the
+   - Append the step's red and green lines to the build log.
+   - Update **Progress**: which step is done, the test count against the baseline
+     (`Step 3 done: 51 passed, 42 before the build.`), anything that went differently from the
      plan, and the next step. Replace the old "Next:" line, and keep the history short.
 
 Update Progress after every step, not only at the end. If the run is cut off, the next
@@ -240,7 +272,7 @@ problem, treat it as section 5.
 
 ## 7. Record it and report
 
-- Update the plan's Progress to `Built on <date>.`, or `Built on <date>, manual checks
+- Replace the `Next: verify.` line in Progress with `Built on <date>.`, or `Built on <date>, manual checks
   pending: AC<n>, AC<m>.` if any are still open.
 - Add one line to the refinement's Progress section: `Built on <date>, see
   plans/feature-<slug>-plan.md.` Change nothing else there.

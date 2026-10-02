@@ -40,3 +40,26 @@ class LearningSession(models.Model):
 
     def __str__(self):
         return f"{self.goal.title} on {self.date}"
+
+
+class Resource(models.Model):
+    class Type(models.TextChoices):
+        ARTICLE = "article", "Article"
+        VIDEO = "video", "Video"
+        REPO = "repo", "Repo"
+        DOC = "doc", "Doc"
+
+    # No user field: the owner is the goal's user (D18).
+    goal = models.ForeignKey(Goal, on_delete=models.CASCADE, related_name="resources")
+    url = models.URLField(max_length=500)
+    title = models.CharField(max_length=200)
+    # No default, so the form starts on the blank choice (D10).
+    type = models.CharField(max_length=20, choices=Type.choices)
+    tags = models.ManyToManyField("core.Tag", blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created_at", "-pk")
+
+    def __str__(self):
+        return self.title

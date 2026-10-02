@@ -2,7 +2,7 @@ from django import forms
 from django.utils import timezone
 
 from core.models import Tag
-from learning.models import Goal, LearningSession
+from learning.models import Goal, LearningSession, Resource
 
 
 class GoalForm(forms.ModelForm):
@@ -64,3 +64,23 @@ class SessionForm(forms.ModelForm):
             session.save()
             self.save_m2m()
         return session
+
+
+class ResourceForm(forms.ModelForm):
+    # Input without a scheme gets https:// (D8). A text input, so the browser
+    # doesn't block that input before the server sees it (D26).
+    url = forms.URLField(
+        label="URL",
+        max_length=500,
+        assume_scheme="https",
+        widget=forms.TextInput(attrs={"inputmode": "url"}),
+    )
+    tags = forms.ModelMultipleChoiceField(
+        queryset=Tag.objects.all(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+    )
+
+    class Meta:
+        model = Resource
+        fields = ("url", "title", "type", "tags")

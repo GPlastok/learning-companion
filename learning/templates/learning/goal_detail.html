@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load learning_extras %}
+
+{% block content %}
+<section class="py-16 max-w-xl">
+    <h1 class="text-3xl font-bold">{{ goal.title }}</h1>
+    {% if goal.description %}
+    <p class="mt-4">{{ goal.description }}</p>
+    {% endif %}
+    <p class="mt-4 flex gap-4">
+        <span class="px-2 border rounded">{{ goal.get_status_display }}</span>
+        <span>{{ goal.session_count }} session{{ goal.session_count|pluralize }}</span>
+        <span>{{ goal.total_minutes|duration }}</span>
+    </p>
+    <div class="mt-4 flex gap-4">
+        <a href="{% url 'goal_edit' goal.pk %}" class="underline">Edit</a>
+        <form method="post" action="{% url 'goal_delete' goal.pk %}" class="inline"
+              hx-post="{% url 'goal_delete' goal.pk %}"
+              hx-confirm="Delete “{{ goal.title }}” and its {{ goal.session_count }} session{{ goal.session_count|pluralize }}?">
+            {% csrf_token %}
+            <input type="hidden" name="from" value="detail">
+            <button type="submit" class="text-red-700 underline">Delete</button>
+        </form>
+    </div>
+    <h2 class="mt-8 text-xl font-bold">Resources</h2>
+    <ul class="mt-2 space-y-2">
+        {% for r in resources %}
+        <li id="resource-{{ r.pk }}" class="p-4 bg-white border rounded">
+            <a href="{{ r.url }}" target="_blank" rel="noopener noreferrer" class="font-bold underline">{{ r.title }}</a>
+            <span class="px-2 border rounded">{{ r.get_type_display }}</span>
+            <span>{% for tag in r.tags.all %}{{ tag.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
+            <a href="{% url 'resource_edit' r.pk %}" class="underline">Edit</a>
+            <form method="post" action="{% url 'resource_delete' r.pk %}" class="inline"
+                  hx-post="{% url 'resource_delete' r.pk %}"
+                  hx-confirm="Delete “{{ r.title }}”?"
+                  hx-target="closest li" hx-swap="outerHTML">
+                {% csrf_token %}
+                <button type="submit" class="text-red-700 underline">Delete</button>
+            </form>
+        </li>
+        {% empty %}
+        <li class="text-gray-600">No resources yet.</li>
+        {% endfor %}
+    </ul>
+    <h2 class="mt-8 text-xl font-bold">Add a resource</h2>
+    <form method="post" action="{% url 'resource_create' goal.pk %}" class="mt-4 space-y-4">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="px-4 py-2 bg-black text-white rounded">Add resource</button>
+    </form>
+    <p class="mt-8"><a href="{% url 'goal_list' %}" class="underline">Back to goals</a></p>
+</section>
+{% endblock %}

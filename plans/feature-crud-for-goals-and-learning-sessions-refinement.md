@@ -19,6 +19,10 @@ Source: #4 (https://github.com/GPlastok/learning-companion/issues/4)
 Refinement done on 2026-10-01. Nothing planned or built yet. Next: the user answers the
 open questions, then a plan is written.
 
+Plan written on 2026-10-02: plans/feature-crud-for-goals-and-learning-sessions-plan.md.
+
+Built on 2026-10-02, see plans/feature-crud-for-goals-and-learning-sessions-plan.md.
+
 ## Acceptance criteria
 
 The ticket has no criteria section or checklist, so all of these come from the ticket

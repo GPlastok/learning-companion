@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="py-16">
+    <h1 class="text-3xl font-bold">Goals</h1>
+    <p class="mt-4 flex gap-4">
+        <a href="{% url 'goal_create' %}" class="underline">New goal</a>
+        <a href="{% url 'session_list' %}" class="underline">Sessions</a>
+    </p>
+    <div id="goal-list" class="mt-6">{% include "learning/_goal_list.html" %}</div>
+</section>
+{% endblock %}

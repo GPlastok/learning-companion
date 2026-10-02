@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="py-16 max-w-xl">
+    <h1 class="text-3xl font-bold">{% if form.instance.pk %}Edit session{% else %}New session{% endif %}</h1>
+    {% if no_goals %}
+    <p class="mt-6 p-4 bg-yellow-50 border rounded">
+        <a href="{% url 'goal_create' %}" class="underline">Create a goal first</a>
+        to log a session for it.
+    </p>
+    {% else %}
+    <form method="post" class="mt-6 space-y-4">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="px-4 py-2 bg-black text-white rounded">Save</button>
+    </form>
+    {% endif %}
+    <p class="mt-4"><a href="{% url 'session_list' %}" class="underline">Back to sessions</a></p>
+</section>
+{% endblock %}

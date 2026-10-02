@@ -4,10 +4,16 @@ from django.urls import reverse
 
 from accounts.models import Cohort, Profile, User
 from core.models import Tag
+from learning.models import Goal, LearningSession
 
 
 @pytest.mark.parametrize("model", [User, Profile, Cohort, Tag])
 def test_ac22_models_registered_in_admin(model):
+    assert admin.site.is_registered(model)
+
+
+@pytest.mark.parametrize("model", [Goal, LearningSession])
+def test_ac41_learning_models_registered_in_admin(model):
     assert admin.site.is_registered(model)
 
 

@@ -1,0 +1,22 @@
+{% load learning_extras %}
+<ul class="space-y-2">
+    {% for s in sessions %}
+    <li id="session-{{ s.pk }}" class="p-4 bg-white border rounded">
+        <span>{{ s.date|date:"j M Y" }}</span>
+        <span class="font-bold">{{ s.goal.title }}</span>
+        <span>{{ s.duration_minutes|duration }}</span>
+        <span>{% for tag in s.tags.all %}{{ tag.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
+        <p>{{ s.notes.splitlines.0 }}</p>
+        <a href="{% url 'session_edit' s.pk %}" class="underline">Edit</a>
+        <form method="post" action="{% url 'session_delete' s.pk %}" class="inline"
+              hx-post="{% url 'session_delete' s.pk %}"
+              hx-confirm="Delete this session?"
+              hx-target="closest li" hx-swap="outerHTML">
+            {% csrf_token %}
+            <button type="submit" class="text-red-700 underline">Delete</button>
+        </form>
+    </li>
+    {% empty %}
+    <li class="text-gray-600">No sessions yet.</li>
+    {% endfor %}
+</ul>

@@ -24,4 +24,5 @@ urlpatterns = [
     path("", views.home, name="home"),
     path("admin/", admin.site.urls),
     path("", include("accounts.urls")),
+    path("", include("learning.urls")),
 ]

@@ -14,6 +14,8 @@ Source: #6 (https://github.com/GPlastok/learning-companion/issues/6). The ticket
 
 Refinement done on 2026-10-02. Nothing planned or built yet. Next: the user answers the open questions, then a plan is written.
 
+Plan written on 2026-10-02: plans/feature-ai-powered-summary-and-next-steps-for-goals-plan.md.
+
 ## Acceptance criteria
 
 - [ ] The goal detail page has a "Generate summary" action and a "Suggest next steps" action.
